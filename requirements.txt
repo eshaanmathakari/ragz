@@ -1,0 +1,8 @@
+# Python dependencies for local development/utilities
+# Note: n8n runs in Docker, but you can use this venv for any Python scripts
+
+# Add any Python utilities you need here
+# Example:
+# requests>=2.31.0
+# python-dotenv>=1.0.0
+
