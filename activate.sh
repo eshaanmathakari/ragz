@@ -14,3 +14,11 @@ echo ""
 echo "To view logs, run:"
 echo "  docker-compose logs -f"
 
+
+
+
+
+
+
+
+

@@ -56,6 +56,7 @@
     },
     {
       "parameters": {
+        "modelName": "text-embedding-3-small",
         "options": {
           "dimensions": 1024
         }
@@ -152,8 +153,8 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "gpt-4.1",
-          "cachedResultName": "gpt-4.1"
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini"
         },
         "options": {}
       },
