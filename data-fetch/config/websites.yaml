@@ -116,6 +116,7 @@ sites:
     extraction_strategy: "api_json"
     data_source:
       type: "api"
+      # Dates will be automatically updated to last 30 days by the scraper
       endpoint: "https://api.coindesk.com/v1/bpi/historical/close.json?currency=USD&start=2024-01-01&end=2024-12-31"
       method: "GET"
       requires_auth: false

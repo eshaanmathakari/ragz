@@ -170,18 +170,27 @@ class CoinGeckoScraper(BaseScraper):
         
         # CoinGecko simple/price format:
         # { "bitcoin": { "usd": 92412 }, "ethereum": { "usd": 2500 } }
+        # Check for error responses first
+        if isinstance(json_data, dict) and "error" in json_data:
+            self.logger.error(f"CoinGecko API error: {json_data.get('error', 'Unknown error')}")
+            return pd.DataFrame()
+        
         if isinstance(json_data, dict) and not any(k in json_data for k in ["prices", "total_volumes", "market_caps"]):
             # Simple price format - convert to DataFrame with current timestamp
             data = []
             current_time = datetime.now()
             for coin_id, prices in json_data.items():
-                row = {
-                    "date": current_time,
-                    "coin_id": coin_id,
-                }
-                row.update(prices)  # Add all currency prices (usd, eur, etc.)
-                data.append(row)
-            df = pd.DataFrame(data)
+                if isinstance(prices, dict):
+                    row = {
+                        "date": current_time,
+                        "coin_id": coin_id,
+                    }
+                    row.update(prices)  # Add all currency prices (usd, eur, etc.)
+                    data.append(row)
+                else:
+                    # Handle unexpected format
+                    self.logger.warning(f"Unexpected price format for {coin_id}: {type(prices)}")
+            df = pd.DataFrame(data) if data else pd.DataFrame()
         
         # CoinGecko market_chart format:
         # { "prices": [[timestamp, price], ...], "total_volumes": [[timestamp, volume], ...] }
@@ -273,10 +282,26 @@ class CryptoCompareScraper(BaseScraper):
         # Determine endpoint
         if self.config and self.config.data_source.endpoint:
             endpoint = self.config.data_source.endpoint
+            # Update date parameters if they're in the endpoint and outdated
+            if self.use_coindesk and "start=" in endpoint and "end=" in endpoint:
+                from datetime import datetime, timedelta
+                today = datetime.now()
+                # Update to last 30 days if dates are old
+                if "2024-01" in endpoint or "2023" in endpoint:
+                    end_date = today.strftime("%Y-%m-%d")
+                    start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+                    # Replace date parameters
+                    import re
+                    endpoint = re.sub(r"start=[^&]+", f"start={start_date}", endpoint)
+                    endpoint = re.sub(r"end=[^&]+", f"end={end_date}", endpoint)
         else:
             if self.use_coindesk:
-                # CoinDesk API endpoint for BTC price history
-                endpoint = f"{self.API_BASE}/bpi/historical/close.json?currency=USD&start=2024-01-01&end=2024-01-31"
+                # CoinDesk API endpoint for BTC price history - use current dates
+                from datetime import datetime, timedelta
+                today = datetime.now()
+                end_date = today.strftime("%Y-%m-%d")
+                start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+                endpoint = f"{self.API_BASE}/bpi/historical/close.json?currency=USD&start={start_date}&end={end_date}"
             else:
                 # Legacy CryptoCompare endpoint
                 endpoint = f"{self.LEGACY_API_BASE}/v2/histoday?fsym=BTC&tsym=USD&limit=30"
@@ -321,22 +346,58 @@ class CryptoCompareScraper(BaseScraper):
                 # Try other CoinDesk formats
                 df = pd.DataFrame([json_data])
         else:
-            # Legacy CryptoCompare format:
-            # { "Data": { "Data": [...] } } or { "Data": [...] }
-            data = json_data
-            if "Data" in data:
-                data = data["Data"]
-                if isinstance(data, dict) and "Data" in data:
+            # Legacy CryptoCompare format - handle multiple response structures
+            # Exchange volume format: { "Response": "Success", "Data": [...] }
+            # Historical format: { "Data": { "Data": [...] } } or { "Data": [...] }
+            
+            # Check for Response field (exchange volume API)
+            if "Response" in json_data and "Data" in json_data:
+                # Exchange volume format - Data is a list of objects
+                data = json_data["Data"]
+                if isinstance(data, list) and len(data) > 0:
+                    # Flatten nested objects in the data
+                    flattened_data = []
+                    for item in data:
+                        if isinstance(item, dict):
+                            flat_item = {}
+                            for key, value in item.items():
+                                # Handle nested objects/dicts
+                                if isinstance(value, dict):
+                                    # Flatten nested dict by prefixing keys
+                                    for nested_key, nested_value in value.items():
+                                        flat_item[f"{key}_{nested_key}"] = nested_value
+                                elif isinstance(value, list):
+                                    # Convert lists to string representation or first element
+                                    if len(value) > 0 and isinstance(value[0], (int, float)):
+                                        flat_item[key] = value[0] if len(value) == 1 else str(value)
+                                    else:
+                                        flat_item[key] = str(value)
+                                else:
+                                    flat_item[key] = value
+                            flattened_data.append(flat_item)
+                        else:
+                            flattened_data.append(item)
+                    df = pd.DataFrame(flattened_data)
+                else:
+                    df = pd.DataFrame([data] if not isinstance(data, list) else data)
+            else:
+                # Historical data format
+                data = json_data
+                if "Data" in data:
                     data = data["Data"]
-            
-            if not isinstance(data, list):
-                data = [data]
-            
-            df = pd.DataFrame(data)
+                    if isinstance(data, dict) and "Data" in data:
+                        data = data["Data"]
+                
+                if not isinstance(data, list):
+                    data = [data]
+                
+                df = pd.DataFrame(data)
             
             # Convert timestamp to datetime
             if "time" in df.columns:
                 df["date"] = pd.to_datetime(df["time"], unit="s")
+            elif "TimeFrom" in df.columns:
+                df["date"] = pd.to_datetime(df["TimeFrom"], unit="s")
             
             # Rename columns to standard names
             column_map = {
@@ -348,6 +409,16 @@ class CryptoCompareScraper(BaseScraper):
                 "open": "open",
             }
             df = df.rename(columns=column_map)
+            
+            # Clean up object columns that might contain [object Object]
+            for col in df.columns:
+                if df[col].dtype == object:
+                    # Check if column contains string representations of objects
+                    sample = df[col].dropna().iloc[0] if len(df[col].dropna()) > 0 else None
+                    if sample and isinstance(sample, str) and "[object" in sample.lower():
+                        # Try to extract meaningful data or remove the column
+                        self.logger.warning(f"Column '{col}' contains object representations, removing")
+                        df = df.drop(columns=[col])
         
         # Sort by date
         if "date" in df.columns:
