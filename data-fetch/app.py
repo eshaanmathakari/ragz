@@ -26,8 +26,11 @@ except ImportError:
     # dotenv not installed, skip
     pass
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add src to path - ensure we can import from src directory
+app_dir = Path(__file__).parent.absolute()
+# Add the app directory to Python path (where src/ folder is located)
+if str(app_dir) not in sys.path:
+    sys.path.insert(0, str(app_dir))
 
 from src.api.frontend_api import FrontendAPI
 
@@ -63,6 +66,7 @@ def check_environment():
         warnings.append("⚠️ Alpha Vantage API key not found. Alpha Vantage data sources will be disabled.")
     
     # Check Playwright browsers (non-blocking check)
+    # Note: On Streamlit Cloud, browsers are installed automatically via post-install
     try:
         from playwright.sync_api import sync_playwright
         try:
@@ -70,34 +74,17 @@ def check_environment():
                 browser = p.chromium.launch(headless=True)
                 browser.close()
         except Exception as e:
-            # Try to auto-install browsers if missing (for Streamlit Cloud)
-            try:
-                import subprocess
-                import sys
-                # Install Chromium browser
-                result = subprocess.run(
-                    [sys.executable, "-m", "playwright", "install", "chromium"],
-                    capture_output=True,
-                    text=True,
-                    timeout=300  # 5 minute timeout
-                )
-                if result.returncode == 0:
-                    # Retry browser launch after installation
-                    try:
-                        with sync_playwright() as p:
-                            browser = p.chromium.launch(headless=True)
-                            browser.close()
-                    except Exception:
-                        warnings.append("⚠️ Playwright browsers installed but still not working. Browser automation may be disabled.")
-                else:
-                    warnings.append(f"⚠️ Failed to auto-install Playwright browsers: {result.stderr}")
-            except Exception as install_error:
-                warnings.append(f"⚠️ Playwright browsers may not be installed. Auto-install failed: {str(install_error)}")
+            error_msg = str(e).lower()
+            # Check if it's a missing browser error
+            if any(keyword in error_msg for keyword in ["executable", "browser", "not found", "no such file"]):
+                warnings.append("⚠️ Playwright browsers not installed. Browser automation will be disabled. The app will attempt to install browsers automatically when needed.")
+            else:
+                warnings.append(f"⚠️ Playwright browser check failed: {str(e)[:100]}")
     except ImportError:
         warnings.append("⚠️ Playwright not installed. Browser automation will not work.")
     except Exception as e:
         # Don't block app startup if Playwright check fails
-        warnings.append(f"⚠️ Playwright check failed: {str(e)}")
+        warnings.append(f"⚠️ Playwright check failed: {str(e)[:100]}")
     
     return warnings
 
