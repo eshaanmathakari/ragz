@@ -15,6 +15,7 @@ from .base_scraper import BaseScraper, ScraperResult
 from ..utils.logger import get_logger
 from ..utils.browser import BrowserManager, PageLoadResult, filter_data_requests
 from ..utils.config_manager import SiteConfig, DataSource
+from ..utils.stealth import StealthManager
 from ..detector.network_inspector import NetworkInspector, CandidateEndpoint
 from ..detector.data_detector import DataDetector, DetectionResult, ExtractionStrategy
 from ..extractor.table_extractor import TableExtractor
@@ -66,6 +67,7 @@ class UniversalScraper(BaseScraper):
         self.use_llm = use_llm
         self.headless = headless
         self.use_stealth = use_stealth
+        self.stealth_manager = StealthManager(randomize=use_stealth) if use_stealth else None
         
         self.network_inspector = NetworkInspector()
         self.table_extractor = TableExtractor()
@@ -93,12 +95,22 @@ class UniversalScraper(BaseScraper):
         
         result = DiscoveryResult(url=url)
         
+        # Configure browser with stealth if enabled
+        user_agent = self.user_agent
+        if self.use_stealth and self.stealth_manager:
+            fingerprint = self.stealth_manager.get_fingerprint()
+            user_agent = fingerprint.user_agent
+        
         # Load page with browser and capture network requests
         async with BrowserManager(
             headless=self.headless,
-            user_agent=self.user_agent,
-            use_stealth=self.use_stealth,
+            user_agent=user_agent,
         ) as browser:
+            # Inject stealth scripts if enabled
+            if self.use_stealth and self.stealth_manager:
+                stealth_scripts = self.stealth_manager.inject_stealth_scripts()
+                for script in stealth_scripts:
+                    await browser._context.add_init_script(script)
             # Try to detect if this is a financial quote page
             is_financial_quote = any(keyword in url.lower() for keyword in [
                 "quote", "market", "stock", "equity", "finance", "ticker", "symbol"

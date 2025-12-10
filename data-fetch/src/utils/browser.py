@@ -101,7 +101,46 @@ class BrowserManager:
             )
         
         self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(headless=self.headless)
+        
+        # Try to launch browser, and install if missing
+        try:
+            self._browser = await self._playwright.chromium.launch(headless=self.headless)
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Check if it's a missing browser error
+            if any(keyword in error_msg for keyword in ["executable", "browser", "not found", "no such file", "chromium"]):
+                self.logger.warning("Playwright browsers not found. Attempting to install automatically...")
+                try:
+                    import subprocess
+                    import sys
+                    # Install chromium browser
+                    result = subprocess.run(
+                        [sys.executable, "-m", "playwright", "install", "chromium"],
+                        capture_output=True,
+                        text=True,
+                        timeout=300,  # 5 minute timeout
+                    )
+                    if result.returncode == 0:
+                        self.logger.info("Playwright browsers installed successfully. Retrying browser launch...")
+                        self._browser = await self._playwright.chromium.launch(headless=self.headless)
+                    else:
+                        self.logger.error(f"Failed to install Playwright browsers: {result.stderr}")
+                        raise RuntimeError(
+                            f"Playwright browsers not installed and automatic installation failed: {result.stderr}"
+                        )
+                except subprocess.TimeoutExpired:
+                    self.logger.error("Playwright browser installation timed out")
+                    raise RuntimeError("Playwright browser installation timed out. Please install manually.")
+                except Exception as install_error:
+                    self.logger.error(f"Error during automatic browser installation: {install_error}")
+                    raise RuntimeError(
+                        f"Playwright browsers not installed. Please install manually with: "
+                        f"python -m playwright install chromium"
+                    )
+            else:
+                # Re-raise if it's a different error
+                raise
+        
         self._context = await self._browser.new_context(
             user_agent=self.user_agent,
             viewport={"width": 1920, "height": 1080},
