@@ -235,6 +235,9 @@ class PipelineRunner:
                 elif site_id.startswith("dune"):
                     from ..scraper.dune_scraper import DuneScraper
                     scraper = DuneScraper(config=config)
+                elif site_id.startswith("fred"):
+                    from ..scraper.fred_scraper import FredScraper
+                    scraper = FredScraper(config=config)
                 elif site_id.startswith("coingecko"):
                     from ..scraper.fallback_scrapers import CoinGeckoScraper
                     scraper = CoinGeckoScraper(config=config)

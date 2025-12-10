@@ -21,6 +21,7 @@ class AuthConfig:
     auth_type: str  # "none", "api_key", "cookies", "session", "oauth"
     api_key: Optional[str] = None
     api_key_header: str = "Authorization"  # Header name for API key
+    api_key_param: Optional[str] = None  # Query parameter name for API key (e.g., "api_key" for FRED)
     api_key_format: str = "Bearer {key}"  # Format string for API key
     cookie_file: Optional[str] = None  # Path to cookie file (Netscape format)
     session_cookies: Dict[str, str] = field(default_factory=dict)  # Dict of cookie name:value
@@ -67,6 +68,7 @@ class AuthManager:
             auth_type=auth_type,
             api_key=config.get("api_key") or os.getenv(config.get("api_key_env", "")),
             api_key_header=config.get("api_key_header", "Authorization"),
+            api_key_param=config.get("api_key_param"),  # For query parameter auth (e.g., FRED)
             api_key_format=config.get("api_key_format", "Bearer {key}"),
             cookie_file=config.get("cookie_file"),
             session_cookies=config.get("session_cookies", {}),

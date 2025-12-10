@@ -68,6 +68,19 @@ CRYPTO_METRICS_PROFILE = ValidationProfile(
     custom_validators=[],
 )
 
+# Market sentiment profile (for FRED economic indicators)
+MARKET_SENTIMENT_PROFILE = ValidationProfile(
+    name="market_sentiment",
+    require_date_column=True,
+    allow_negative_volumes=True,  # Economic indicators can be negative
+    allow_negative_oi=True,
+    allow_negative_prices=True,  # Some indicators can be negative
+    min_rows=1,
+    max_rows=None,  # Time series can have many rows
+    skip_date_continuity=False,  # Check date continuity for time series
+    custom_validators=[],
+)
+
 # Profile mapping by site_id prefix
 PROFILE_MAP = {
     "coinglass": CRYPTO_METRICS_PROFILE,
@@ -78,6 +91,7 @@ PROFILE_MAP = {
     "alphavantage": SNAPSHOT_PROFILE,
     "invezz": CRYPTO_METRICS_PROFILE,
     "bitcoin_com": CRYPTO_METRICS_PROFILE,
+    "fred": MARKET_SENTIMENT_PROFILE,
 }
 
 

@@ -351,6 +351,151 @@ sites:
       api_key_header: "x-dune-api-key"
       api_key_format: "{key}"
 
+  # FRED Market Sentiment Indicators
+  # Consumer Confidence (US) - OECD composite indicator
+  - id: fred_consumer_confidence
+    name: "FRED - Consumer Confidence (US)"
+    base_url: "https://api.stlouisfed.org"
+    page_url: "https://fred.stlouisfed.org/series/USACSCICP02STSAM"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://api.stlouisfed.org/fred/series/observations"
+      method: "GET"
+      requires_auth: true
+      series_id: "USACSCICP02STSAM"
+      parameters:
+        file_type: "json"
+        limit: 1000
+        sort_order: "desc"
+    field_mappings:
+      date: "date"
+      value: "value"
+      series_name: "Consumer Confidence (US)"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "OECD composite consumer confidence indicator (percentage balance)"
+    rate_limit: 0.5  # 120 requests/min = 0.5 seconds between requests
+    auth_config:
+      auth_type: "api_key"
+      api_key_env: "FRED_API_KEY"
+      api_key_param: "api_key"  # FRED uses query parameter, not header
+
+  # 10-Year Breakeven Inflation - Market-based CPI expectation
+  - id: fred_10y_breakeven_inflation
+    name: "FRED - 10-Year Breakeven Inflation"
+    base_url: "https://api.stlouisfed.org"
+    page_url: "https://fred.stlouisfed.org/series/T10YIE"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://api.stlouisfed.org/fred/series/observations"
+      method: "GET"
+      requires_auth: true
+      series_id: "T10YIE"
+      parameters:
+        file_type: "json"
+        limit: 1000
+        sort_order: "desc"
+    field_mappings:
+      date: "date"
+      value: "value"
+      series_name: "10-Year Breakeven Inflation"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Market-based CPI expectation (10-year Treasury Inflation-Protected Securities)"
+    rate_limit: 0.5
+    auth_config:
+      auth_type: "api_key"
+      api_key_env: "FRED_API_KEY"
+      api_key_param: "api_key"
+
+  # Consumer Sentiment Index - University of Michigan
+  - id: fred_consumer_sentiment
+    name: "FRED - Consumer Sentiment Index"
+    base_url: "https://api.stlouisfed.org"
+    page_url: "https://fred.stlouisfed.org/series/UMCSENT"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://api.stlouisfed.org/fred/series/observations"
+      method: "GET"
+      requires_auth: true
+      series_id: "UMCSENT"
+      parameters:
+        file_type: "json"
+        limit: 1000
+        sort_order: "desc"
+    field_mappings:
+      date: "date"
+      value: "value"
+      series_name: "Consumer Sentiment Index"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "University of Michigan Consumer Sentiment Index (1966:Q1=100, NSA)"
+    rate_limit: 0.5
+    auth_config:
+      auth_type: "api_key"
+      api_key_env: "FRED_API_KEY"
+      api_key_param: "api_key"
+
+  # 5y5y Forward Inflation - 5-year inflation starting 5 years ahead
+  - id: fred_5y5y_forward_inflation
+    name: "FRED - 5y5y Forward Inflation"
+    base_url: "https://api.stlouisfed.org"
+    page_url: "https://fred.stlouisfed.org/series/T5YIFR"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://api.stlouisfed.org/fred/series/observations"
+      method: "GET"
+      requires_auth: true
+      series_id: "T5YIFR"
+      parameters:
+        file_type: "json"
+        limit: 1000
+        sort_order: "desc"
+    field_mappings:
+      date: "date"
+      value: "value"
+      series_name: "5y5y Forward Inflation"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "5-year inflation starting 5 years ahead (forward inflation expectation)"
+    rate_limit: 0.5
+    auth_config:
+      auth_type: "api_key"
+      api_key_env: "FRED_API_KEY"
+      api_key_param: "api_key"
+
   # The Block - Exchange Volume (Browser-based with API fallback)
   - id: theblock_exchange_volume
     name: "The Block - Exchange Volume"

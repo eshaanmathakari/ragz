@@ -26,7 +26,8 @@ class DataSource:
     query_id: Optional[str] = None  # For Dune queries
     max_poll_attempts: int = 30  # For Dune queries
     poll_interval: int = 2  # For Dune queries
-    parameters: Dict[str, Any] = field(default_factory=dict)  # For Dune queries
+    parameters: Dict[str, Any] = field(default_factory=dict)  # For Dune queries, FRED series_id, etc.
+    series_id: Optional[str] = None  # For FRED series
 
 
 @dataclass
@@ -55,6 +56,7 @@ class AuthConfig:
     api_key: Optional[str] = None
     api_key_env: Optional[str] = None  # Environment variable name for API key
     api_key_header: str = "Authorization"
+    api_key_param: Optional[str] = None  # Query parameter name for API key (e.g., "api_key" for FRED)
     api_key_format: str = "Bearer {key}"  # Format string
     cookie_file: Optional[str] = None
     session_cookies: Dict[str, str] = field(default_factory=dict)
@@ -112,6 +114,7 @@ class SiteConfig:
             max_poll_attempts=data_source_dict.get("max_poll_attempts", 30),
             poll_interval=data_source_dict.get("poll_interval", 2),
             parameters=data_source_dict.get("parameters", {}),
+            series_id=data_source_dict.get("series_id"),
         )
         robots_policy = RobotsPolicy(**data.get("robots_policy", {"status": "UNKNOWN"}))
         # Handle metadata with optional fields
