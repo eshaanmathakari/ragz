@@ -107,35 +107,49 @@ class BrowserManager:
             self._browser = await self._playwright.chromium.launch(headless=self.headless)
         except Exception as e:
             error_msg = str(e).lower()
-            # Check if it's a missing browser error
-            if any(keyword in error_msg for keyword in ["executable", "browser", "not found", "no such file", "chromium"]):
-                self.logger.warning("Playwright browsers not found. Attempting to install automatically...")
+            # Check if it's a missing browser error or missing system dependencies
+            is_browser_error = any(keyword in error_msg for keyword in [
+                "executable", "browser", "not found", "no such file", "chromium",
+                "libnspr4", "shared libraries", "cannot open shared object"
+            ])
+            
+            if is_browser_error:
+                self.logger.warning("Playwright browsers not found or missing dependencies. Attempting to install automatically...")
                 try:
                     import subprocess
                     import sys
-                    # Install chromium browser
+                    # Install chromium browser with system dependencies
+                    # --with-deps is required for Streamlit Cloud and other containerized environments
+                    self.logger.info("Installing Playwright browsers with system dependencies (this may take a few minutes)...")
                     result = subprocess.run(
-                        [sys.executable, "-m", "playwright", "install", "chromium"],
+                        [sys.executable, "-m", "playwright", "install", "chromium", "--with-deps"],
                         capture_output=True,
                         text=True,
-                        timeout=300,  # 5 minute timeout
+                        timeout=600,  # 10 minute timeout (deps installation can take longer)
                     )
                     if result.returncode == 0:
-                        self.logger.info("Playwright browsers installed successfully. Retrying browser launch...")
+                        self.logger.info("Playwright browsers and dependencies installed successfully. Retrying browser launch...")
+                        # Close and recreate playwright instance to ensure clean state
+                        await self._playwright.stop()
+                        self._playwright = await async_playwright().start()
                         self._browser = await self._playwright.chromium.launch(headless=self.headless)
                     else:
-                        self.logger.error(f"Failed to install Playwright browsers: {result.stderr}")
+                        error_output = result.stderr or result.stdout or "Unknown error"
+                        self.logger.error(f"Failed to install Playwright browsers: {error_output}")
                         raise RuntimeError(
-                            f"Playwright browsers not installed and automatic installation failed: {result.stderr}"
+                            f"Playwright browsers not installed and automatic installation failed: {error_output}"
                         )
                 except subprocess.TimeoutExpired:
                     self.logger.error("Playwright browser installation timed out")
-                    raise RuntimeError("Playwright browser installation timed out. Please install manually.")
+                    raise RuntimeError(
+                        "Playwright browser installation timed out. "
+                        "Please install manually with: python -m playwright install chromium --with-deps"
+                    )
                 except Exception as install_error:
                     self.logger.error(f"Error during automatic browser installation: {install_error}")
                     raise RuntimeError(
                         f"Playwright browsers not installed. Please install manually with: "
-                        f"python -m playwright install chromium"
+                        f"python -m playwright install chromium --with-deps"
                     )
             else:
                 # Re-raise if it's a different error
