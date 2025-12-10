@@ -14,6 +14,96 @@ from ..utils.logger import get_logger
 
 
 @dataclass
+class ValidationProfile:
+    """Validation profile for site-specific validation rules."""
+    name: str
+    require_date_column: bool = False
+    allow_negative_volumes: bool = False
+    allow_negative_oi: bool = False
+    allow_negative_prices: bool = False
+    min_rows: int = 1
+    max_rows: Optional[int] = None
+    skip_date_continuity: bool = False
+    custom_validators: List[Callable] = field(default_factory=list)
+    
+    def __post_init__(self):
+        """Initialize custom validators list if not provided."""
+        if self.custom_validators is None:
+            self.custom_validators = []
+
+
+# Predefined validation profiles
+SNAPSHOT_PROFILE = ValidationProfile(
+    name="snapshot",
+    require_date_column=False,
+    allow_negative_volumes=False,
+    allow_negative_oi=False,
+    allow_negative_prices=False,
+    min_rows=1,
+    max_rows=1,
+    skip_date_continuity=True,
+)
+
+TIME_SERIES_PROFILE = ValidationProfile(
+    name="time_series",
+    require_date_column=True,
+    allow_negative_volumes=False,
+    allow_negative_oi=False,
+    allow_negative_prices=False,
+    min_rows=1,
+    max_rows=None,
+    skip_date_continuity=False,
+)
+
+CRYPTO_METRICS_PROFILE = ValidationProfile(
+    name="crypto_metrics",
+    require_date_column=False,
+    allow_negative_volumes=False,
+    allow_negative_oi=False,
+    allow_negative_prices=False,
+    min_rows=1,
+    max_rows=1,
+    skip_date_continuity=True,
+    # Allow negative net flows
+    custom_validators=[],
+)
+
+# Profile mapping by site_id prefix
+PROFILE_MAP = {
+    "coinglass": CRYPTO_METRICS_PROFILE,
+    "dune": SNAPSHOT_PROFILE,  # Dune queries can return time-series or snapshot
+    "theblock": TIME_SERIES_PROFILE,
+    "coingecko": TIME_SERIES_PROFILE,
+    "cryptocompare": TIME_SERIES_PROFILE,
+    "alphavantage": SNAPSHOT_PROFILE,
+    "invezz": CRYPTO_METRICS_PROFILE,
+    "bitcoin_com": CRYPTO_METRICS_PROFILE,
+}
+
+
+def get_validation_profile(site_id: Optional[str] = None) -> ValidationProfile:
+    """
+    Get validation profile for a site.
+    
+    Args:
+        site_id: Site ID to get profile for
+    
+    Returns:
+        ValidationProfile instance
+    """
+    if not site_id:
+        return SNAPSHOT_PROFILE
+    
+    # Check profile map by prefix
+    for prefix, profile in PROFILE_MAP.items():
+        if site_id.startswith(prefix):
+            return profile
+    
+    # Default to snapshot profile
+    return SNAPSHOT_PROFILE
+
+
+@dataclass
 class ValidationResult:
     """Result of data validation."""
     is_valid: bool
@@ -52,6 +142,7 @@ class DataValidator:
         date_column: Optional[str] = "date",
         numeric_columns: Optional[List[str]] = None,
         require_date_column: bool = False,
+        validation_profile: Optional[ValidationProfile] = None,
     ):
         """
         Initialize the validator.
@@ -61,6 +152,7 @@ class DataValidator:
             date_column: Name of the date column (None to skip date checks)
             numeric_columns: List of numeric column names to validate
             require_date_column: If True, missing date column is an error
+            validation_profile: Validation profile to use (overrides other settings)
         """
         self.strict_mode = strict_mode
         self.date_column = date_column
@@ -68,8 +160,17 @@ class DataValidator:
         self.require_date_column = require_date_column
         self.logger = get_logger()
         
+        # Use validation profile if provided
+        self.profile = validation_profile
+        if self.profile:
+            self.require_date_column = self.profile.require_date_column
+            if not self.date_column and self.profile.require_date_column:
+                self.date_column = "date"
+        
         # Custom validators
         self._custom_validators: List[Callable[[pd.DataFrame], List[str]]] = []
+        if self.profile and self.profile.custom_validators:
+            self._custom_validators.extend(self.profile.custom_validators)
     
     def add_validator(self, validator: Callable[[pd.DataFrame], List[str]]):
         """Add a custom validator function."""
@@ -98,6 +199,17 @@ class DataValidator:
             "columns": list(df.columns),
         }
         
+        # Check row count constraints from profile
+        if self.profile:
+            if len(df) < self.profile.min_rows:
+                result.add_error(
+                    f"DataFrame has {len(df)} rows, minimum required: {self.profile.min_rows}"
+                )
+            if self.profile.max_rows and len(df) > self.profile.max_rows:
+                result.add_warning(
+                    f"DataFrame has {len(df)} rows, expected maximum: {self.profile.max_rows}"
+                )
+        
         # Run all validations
         self._check_required_columns(df, result)
         self._check_duplicates(df, result)
@@ -105,7 +217,10 @@ class DataValidator:
         self._check_date_column(df, result)
         self._check_numeric_columns(df, result)
         self._check_outliers(df, result)
-        self._check_date_continuity(df, result)
+        
+        # Skip date continuity if profile says so
+        if not (self.profile and self.profile.skip_date_continuity):
+            self._check_date_continuity(df, result)
         
         # Financial-specific validations
         self._validate_price_ranges(df, result)
@@ -258,9 +373,27 @@ class DataValidator:
                     continue
             
             # Check for negative values (often invalid for volumes, prices)
+            # Use profile settings if available
+            allow_negative = False
+            if self.profile:
+                if "volume" in col.lower():
+                    allow_negative = self.profile.allow_negative_volumes
+                elif "oi" in col.lower() or "open" in col.lower() and "interest" in col.lower():
+                    allow_negative = self.profile.allow_negative_oi
+                elif "price" in col.lower():
+                    allow_negative = self.profile.allow_negative_prices
+                # Net inflow/outflow can be negative
+                elif "inflow" in col.lower() or "outflow" in col.lower():
+                    allow_negative = True
+            
             neg_count = (series < 0).sum()
             if neg_count > 0:
-                result.add_warning(f"Column '{col}' has {neg_count} negative values")
+                if allow_negative:
+                    result.add_warning(
+                        f"Column '{col}' has {neg_count} negative values (allowed by profile)"
+                    )
+                else:
+                    result.add_warning(f"Column '{col}' has {neg_count} negative values")
             
             # Collect stats
             if col not in result.stats.get("numeric_stats", {}):
@@ -394,6 +527,11 @@ class DataValidator:
         """Validate volume data (should be positive)."""
         volume_cols = [col for col in df.columns if "volume" in col.lower()]
         
+        # Check if negative volumes are allowed by profile
+        allow_negative = False
+        if self.profile:
+            allow_negative = self.profile.allow_negative_volumes
+        
         for col in volume_cols:
             if col not in df.columns:
                 continue
@@ -405,7 +543,12 @@ class DataValidator:
             # Check for negative volumes
             neg_count = (series < 0).sum()
             if neg_count > 0:
-                result.add_error(f"Column '{col}' has {neg_count} negative volumes (invalid)")
+                if allow_negative:
+                    result.add_warning(
+                        f"Column '{col}' has {neg_count} negative volumes (allowed by profile)"
+                    )
+                else:
+                    result.add_error(f"Column '{col}' has {neg_count} negative volumes (invalid)")
             
             # Check for zero volumes (might indicate data issues)
             zero_count = (series == 0).sum()

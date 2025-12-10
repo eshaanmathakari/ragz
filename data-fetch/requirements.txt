@@ -51,6 +51,9 @@ typing-extensions>=4.0.0
 # Frontend (Streamlit)
 streamlit>=1.28.0
 
+# Dune Analytics SDK (optional - falls back to manual API if not installed)
+dune-client>=3.0.0
+
 # Note: playwright-stealth is optional and can be installed separately
 # if needed: pip install playwright-stealth
 

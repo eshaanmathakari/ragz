@@ -189,7 +189,7 @@ with st.sidebar:
         st.info("No sites configured. Use URL input instead.")
 
 # Main content
-tab1, tab2 = st.tabs(["Scrape from URL", "Scrape from Configured Site"])
+tab1, tab2, tab3 = st.tabs(["Scrape from URL", "Scrape from Configured Site", "📰 Fintech News"])
 
 with tab1:
     st.header("Scrape from URL")
@@ -343,6 +343,96 @@ with tab2:
                         st.error(f"❌ Scraping failed: {result['error']}")
     else:
         st.info("Select a configured site from the sidebar to scrape data.")
+
+with tab3:
+    st.header("📰 Latest Fintech News")
+    st.markdown("Stay updated with the latest financial technology news and market insights.")
+    
+    # News sources configuration
+    news_sources = [
+        {
+            "name": "CoinDesk",
+            "url": "https://www.coindesk.com",
+            "description": "Cryptocurrency and blockchain news"
+        },
+        {
+            "name": "The Block",
+            "url": "https://www.theblock.co",
+            "description": "Crypto markets and data"
+        },
+        {
+            "name": "Decrypt",
+            "url": "https://decrypt.co",
+            "description": "Crypto news and analysis"
+        },
+        {
+            "name": "CoinTelegraph",
+            "url": "https://cointelegraph.com",
+            "description": "Bitcoin and cryptocurrency news"
+        },
+    ]
+    
+    # Display news sources
+    st.subheader("Available News Sources")
+    cols = st.columns(2)
+    
+    for idx, source in enumerate(news_sources):
+        with cols[idx % 2]:
+            with st.container():
+                st.markdown(f"### {source['name']}")
+                st.caption(source['description'])
+                st.markdown(f"[Visit Website →]({source['url']})")
+                st.markdown("---")
+    
+    # News scraping section
+    st.subheader("Scrape News Articles")
+    st.info("💡 Tip: Use the 'Scrape from URL' tab to extract news articles from these sources.")
+    
+    # Quick links to scrape news
+    st.markdown("### Quick Scrape Links")
+    news_url_input = st.text_input(
+        "Enter news article URL:",
+        placeholder="https://www.coindesk.com/...",
+        key="news_url"
+    )
+    
+    if st.button("Scrape News Article", key="scrape_news"):
+        if news_url_input:
+            if not news_url_input.startswith(("http://", "https://")):
+                st.error("Please enter a valid URL starting with http:// or https://")
+            else:
+                with st.spinner("Scraping news article... This may take a moment."):
+                    result = api.scrape_url(
+                        url=news_url_input,
+                        use_stealth=use_stealth,
+                        override_robots=override_robots,
+                        use_fallbacks=use_fallbacks,
+                    )
+                    
+                    if result["success"]:
+                        st.success(f"✅ Successfully extracted {result['rows']} rows of data!")
+                        
+                        # Data preview
+                        st.subheader("Article Data Preview")
+                        st.dataframe(result["data"], width='stretch')
+                        
+                        # Download section
+                        excel_bytes, filename = api.export_to_excel(
+                            result["data"], 
+                            filename=f"news_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}"
+                        )
+                        
+                        if excel_bytes:
+                            st.download_button(
+                                label="📥 Download News Data",
+                                data=excel_bytes,
+                                file_name=filename,
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                type="primary",
+                                key="download_news"
+                            )
+                    else:
+                        st.error(f"❌ Scraping failed: {result['error']}")
 
 # Footer
 st.markdown("---")

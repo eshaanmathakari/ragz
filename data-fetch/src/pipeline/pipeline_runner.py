@@ -12,7 +12,11 @@ import pandas as pd
 from ..utils.logger import get_logger
 from ..utils.config_manager import ConfigManager, SiteConfig
 from ..scraper.base_scraper import BaseScraper, ScraperResult
-from ..pipeline.validators import DataValidator, ValidationResult
+from ..pipeline.validators import (
+    DataValidator, 
+    ValidationResult,
+    get_validation_profile,
+)
 from ..exporter.excel_exporter import ExcelExporter
 
 
@@ -55,7 +59,7 @@ class PipelineRunner:
         """
         self.config_manager = config_manager or ConfigManager()
         self.scrapers = scrapers or {}
-        # Create validator that doesn't require date column (for non-time-series data)
+        # Create validator with default profile (will be updated per-site)
         self.validator = validator or DataValidator(require_date_column=False)
         self.exporter = exporter or ExcelExporter()
         self.logger = get_logger()
@@ -147,7 +151,20 @@ class PipelineRunner:
         # Validate if successful
         if result.success and validate and result.data is not None:
             self.logger.info("Validating extracted data...")
-            result.validation_result = self.validator.validate(result.data)
+            
+            # Get site-specific validation profile
+            validation_profile = get_validation_profile(result.source_used)
+            if validation_profile:
+                # Create a new validator with the profile
+                site_validator = DataValidator(
+                    strict_mode=self.validator.strict_mode,
+                    date_column=self.validator.date_column,
+                    numeric_columns=self.validator.numeric_columns,
+                    validation_profile=validation_profile,
+                )
+                result.validation_result = site_validator.validate(result.data)
+            else:
+                result.validation_result = self.validator.validate(result.data)
             
             if not result.validation_result.is_valid:
                 self.logger.warning(
