@@ -210,6 +210,14 @@ class PipelineRunner:
                 if site_id.startswith("theblock"):
                     from ..scraper.theblock_scraper import TheBlockScraper
                     scraper = TheBlockScraper(config=config)
+                elif site_id.startswith("coinglass"):
+                    from ..scraper.coinglass_scraper import CoinGlassScraper
+                    import os
+                    use_stealth = os.getenv("USE_STEALTH_MODE", "true").lower() in ("true", "1", "yes")
+                    scraper = CoinGlassScraper(config=config, use_stealth=use_stealth)
+                elif site_id.startswith("dune"):
+                    from ..scraper.dune_scraper import DuneScraper
+                    scraper = DuneScraper(config=config)
                 elif site_id.startswith("coingecko"):
                     from ..scraper.fallback_scrapers import CoinGeckoScraper
                     scraper = CoinGeckoScraper(config=config)

@@ -237,6 +237,13 @@ class UniversalScraper(BaseScraper):
         Fetch raw data from the URL using fallback chain.
         Tries strategies in order: API → JavaScript → Table → CSV → XML
         """
+        # Check if config specifies browser-based extraction
+        if self.config and self.config.extraction_strategy == "dom_js_extraction":
+            # Use browser-based extraction (CoinGlass, etc.)
+            from ..scraper.coinglass_scraper import CoinGlassScraper
+            coinglass_scraper = CoinGlassScraper(config=self.config, use_stealth=self.use_stealth)
+            return coinglass_scraper.fetch_raw(url)
+        
         # Run discovery if not already done
         if not self._discovery_result or self._discovery_result.url != url:
             self._discovery_result = self.discover_data_sources_sync(url)
@@ -524,6 +531,26 @@ class UniversalScraper(BaseScraper):
         """Parse raw data into a DataFrame using the appropriate extractor."""
         data_type = raw_data.get("type")
         content = raw_data.get("content")
+        
+        # Handle browser-based extraction (dom_js_extraction)
+        if data_type == "dom_js_extraction":
+            # Use CoinGlass scraper for parsing if config matches
+            if self.config and self.config.extraction_strategy == "dom_js_extraction":
+                from ..scraper.coinglass_scraper import CoinGlassScraper
+                coinglass_scraper = CoinGlassScraper(config=self.config, use_stealth=self.use_stealth)
+                return coinglass_scraper.parse_raw(raw_data)
+            # Otherwise try to extract from HTML/JS
+            html = content if isinstance(content, str) else content.decode("utf-8") if content else ""
+            if html:
+                # Try JavaScript extraction first
+                js_df = self.js_extractor.extract_from_html(html)
+                if not js_df.empty and len(js_df) > 0:
+                    return js_df
+                # Fallback to table extraction
+                tables = self.table_extractor.find_tables(html)
+                if tables:
+                    return self.table_extractor.extract_best_table(html, min_rows=1, require_numeric=False)
+            return pd.DataFrame()
         
         if data_type == "api_json":
             # Parse JSON response

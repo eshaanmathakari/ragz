@@ -167,3 +167,286 @@ sites:
       last_successful_extraction: null
     rate_limit: 12.0  # seconds between requests (5 calls/minute for free tier)
 
+
+  # CoinGlass - BTC Overview (Browser-based extraction)
+  - id: coinglass_btc_overview
+    name: "CoinGlass - BTC Overview"
+    base_url: "https://www.coinglass.com"
+    page_url: "https://www.coinglass.com/currencies/BTC"
+    extraction_strategy: "dom_js_extraction"
+    data_source:
+      type: "browser"
+      page_url: "https://www.coinglass.com/currencies/BTC"
+    field_mappings:
+      btc_price: "BTC Price"
+      futures_volume_24h: "Futures Volume (24h)"
+      spot_volume_24h: "Spot Volume (24h)"
+      open_interest: "Open Interest"
+      net_inflow_24h: "Net Inflow (24h)"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Browser-based extraction to avoid paid API"
+    rate_limit: 5.0  # seconds between requests (to avoid Cloudflare)
+
+  # CoinGlass - Spot Inflow/Outflow (Browser-based extraction)
+  - id: coinglass_spot_flows
+    name: "CoinGlass - Spot Inflow/Outflow"
+    base_url: "https://www.coinglass.com"
+    page_url: "https://www.coinglass.com/currencies/BTC"
+    extraction_strategy: "dom_js_extraction"
+    data_source:
+      type: "browser"
+      page_url: "https://www.coinglass.com/currencies/BTC"
+    field_mappings:
+      net_inflow_5min: "Net Inflow (5 min)"
+      net_inflow_1h: "Net Inflow (1 hour)"
+      net_inflow_4h: "Net Inflow (4 hours)"
+      net_inflow_12h: "Net Inflow (12 hours)"
+      net_inflow_24h: "Net Inflow (24 hours)"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Extracted from BTC overview page or dedicated page"
+    rate_limit: 5.0
+
+  # CoinGlass - Volatility Metrics (Browser-based extraction)
+  - id: coinglass_volatility
+    name: "CoinGlass - Volatility Metrics"
+    base_url: "https://www.coinglass.com"
+    page_url: "https://www.coinglass.com/volatility"
+    extraction_strategy: "dom_js_extraction"
+    data_source:
+      type: "browser"
+      page_url: "https://www.coinglass.com/volatility"
+    field_mappings:
+      btc_volatility_1d: "BTC Volatility (1-day)"
+      eth_volatility_1d: "ETH Volatility (1-day)"
+      sol_volatility_1d: "SOL Volatility (1-day)"
+      xrp_volatility_1d: "XRP Volatility (1-day)"
+      doge_volatility_1d: "DOGE Volatility (1-day)"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+    rate_limit: 5.0
+
+  # Dune Analytics - ETH Staking (API-based)
+  - id: dune_eth_staking
+    name: "Dune - ETH Staking"
+    base_url: "https://dune.com"
+    page_url: "https://dune.com/datasets/ethereum-eth-staking"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://api.dune.com/api/v1/query"
+      method: "POST"
+      requires_auth: true
+      query_id: null  # To be filled with actual query ID
+      max_poll_attempts: 30
+      poll_interval: 2
+      parameters: {}
+    field_mappings:
+      total_eth_deposited: "Total ETH Deposited"
+      total_validators: "Total Validators"
+      distinct_depositor_addresses: "Distinct Depositor Addresses"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Requires DUNE_API_KEY. Query ID must be set after creating query in Dune."
+    rate_limit: 2.0
+    auth_config:
+      auth_type: "api_key"
+      api_key_env: "DUNE_API_KEY"
+      api_key_header: "x-dune-api-key"
+      api_key_format: "{key}"
+
+  # The Block - Exchange Volume (Browser-based with API fallback)
+  - id: theblock_exchange_volume
+    name: "The Block - Exchange Volume"
+    base_url: "https://www.theblock.co"
+    page_url: "https://www.theblock.co/data/crypto-markets/spot/total-exchange-volume-daily"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://www.theblock.co/api/charts/chart/crypto-markets/spot/total-exchange-volume-daily"
+      method: "GET"
+      requires_auth: false
+      headers: {}
+    field_mappings:
+      monthly_spot_volume: "Monthly Spot Volume"
+      binance_spot_volume: "Binance Spot Volume"
+      bybit_spot_volume: "Bybit Spot Volume"
+      bitget_spot_volume: "Bitget Spot Volume"
+      dex_monthly_volume: "DEX Monthly Volume"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "May require subscription for some data"
+    rate_limit: 2.0
+
+  # The Block - ETH vs BTC Volumes (Browser-based with API fallback)
+  - id: theblock_eth_btc_volumes
+    name: "The Block - ETH vs BTC Volumes"
+    base_url: "https://www.theblock.co"
+    page_url: "https://www.theblock.co/data/crypto-markets/spot/btc-and-eth-total-exchange-volume-7dma"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://www.theblock.co/api/charts/chart/crypto-markets/spot/btc-and-eth-total-exchange-volume-7dma"
+      method: "GET"
+      requires_auth: false
+      headers: {}
+    field_mappings:
+      eth_monthly_spot_volume: "ETH Monthly Spot Volume"
+      btc_monthly_spot_volume: "BTC Monthly Spot Volume"
+      spot_eth_etf_net_flows: "Spot ETH ETF Net Flows"
+      spot_btc_etf_net_flows: "Spot BTC ETF Net Flows"
+      ytd_performance_eth_btc: "YTD Performance (ETH/BTC)"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+    rate_limit: 2.0
+
+  # CME Group - BTC Futures (Browser-based, requires subscription)
+  - id: cme_btc_futures
+    name: "CME Group - BTC Futures"
+    base_url: "https://www.cmegroup.com"
+    page_url: "https://www.cmegroup.com/markets/cryptocurrencies/bitcoin/bitcoin.quotes.html"
+    extraction_strategy: "dom_js_extraction"
+    data_source:
+      type: "browser"
+      page_url: "https://www.cmegroup.com/markets/cryptocurrencies/bitcoin/bitcoin.quotes.html"
+    field_mappings:
+      total_oi_all_months: "Total OI (All Months)"
+      total_volume_all_venues: "Total Volume (All Venues)"
+      dec_2025_oi: "DEC 2025 OI"
+      nov_2025_oi: "NOV 2025 OI"
+      jan_2026_oi: "JAN 2026 OI"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: true
+      notes: "CME data requires paid subscription. Browser scraping may be limited."
+    rate_limit: 10.0
+
+  # Bitcoin.com - Derivatives Snapshot (Uses CoinGlass data)
+  - id: bitcoin_com_derivatives_snapshot
+    name: "Bitcoin.com - Derivatives Snapshot (via CoinGlass)"
+    base_url: "https://www.coinglass.com"
+    page_url: "https://www.coinglass.com/currencies/BTC"
+    extraction_strategy: "dom_js_extraction"
+    data_source:
+      type: "browser"
+      page_url: "https://www.coinglass.com/currencies/BTC"
+    field_mappings:
+      futures_oi_all_exchanges: "Futures OI (All Exchanges)"
+      cme_btc_oi: "CME BTC OI"
+      binance_btc_oi: "Binance BTC OI"
+      btc_options_calls_oi: "BTC Options Calls OI"
+      btc_options_puts_oi: "BTC Options Puts OI"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Data source is CoinGlass, not Bitcoin.com. Bitcoin.com does not have a derivatives API."
+    rate_limit: 5.0
+
+  # Invezz - Liquidations (Browser-based)
+  - id: invezz_liquidations
+    name: "Invezz - Liquidations"
+    base_url: "https://invezz.com"
+    page_url: "https://invezz.com/crypto/liquidations"
+    extraction_strategy: "dom_js_extraction"
+    data_source:
+      type: "browser"
+      page_url: "https://invezz.com/crypto/liquidations"
+    field_mappings:
+      total_liquidations_24h: "Total Liquidations (24h)"
+      long_liquidations: "Long Liquidations"
+      short_liquidations: "Short Liquidations"
+      btc_liquidations: "BTC Liquidations"
+      eth_liquidations: "ETH Liquidations"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Browser-based extraction. Data may be from secondary sources."
+    rate_limit: 5.0
+
+  # 24/7 Wall St - Crypto Wipeout (Browser-based)
+  - id: wallst_crypto_wipeout
+    name: "24/7 Wall St - Crypto Wipeout"
+    base_url: "https://247wallst.com"
+    page_url: "https://247wallst.com/crypto"
+    extraction_strategy: "dom_js_extraction"
+    data_source:
+      type: "browser"
+      page_url: "https://247wallst.com/crypto"
+    field_mappings:
+      total_liquidations_24h: "Total Liquidations (24h)"
+      traders_liquidated: "Traders Liquidated"
+      btc_liquidations: "BTC Liquidations"
+      crypto_market_cap: "Crypto Market Cap"
+      fear_greed_index: "Fear & Greed Index"
+    robots_policy:
+      status: "UNKNOWN"
+      last_checked: "2025-12-09T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-09T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Browser-based extraction. Data may be from secondary sources."
+    rate_limit: 5.0

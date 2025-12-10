@@ -14,3 +14,4 @@ echo "Playwright setup complete!"
 echo "Chromium browser is now available for web scraping."
 
 
+

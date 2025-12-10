@@ -171,6 +171,19 @@ with st.sidebar:
     if sites:
         site_options = ["None"] + [f"{s['id']} - {s['name']}" for s in sites]
         selected_site = st.selectbox("Select a configured site:", site_options)
+        
+        # Show site info if selected
+        if selected_site != "None":
+            site_id = selected_site.split(" - ")[0]
+            site_info = next((s for s in sites if s["id"] == site_id), None)
+            if site_info:
+                with st.expander("Site Information", expanded=False):
+                    st.write(f"**URL:** {site_info['page_url']}")
+                    st.write(f"**Strategy:** {site_info.get('extraction_strategy', 'N/A')}")
+                    st.write(f"**API Key:** {site_info.get('api_key_status', 'N/A')}")
+                    if site_info.get('requires_subscription'):
+                        st.warning("⚠️ This site requires a paid subscription")
+                    st.write(f"**Robots.txt:** {site_info.get('robots_status', 'UNKNOWN')}")
     else:
         selected_site = "None"
         st.info("No sites configured. Use URL input instead.")

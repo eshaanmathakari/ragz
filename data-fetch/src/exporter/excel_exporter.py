@@ -287,6 +287,21 @@ class ExcelExporter:
                 meta_data["property"].append(key)
                 meta_data["value"].append(str(value))
         
+        # Add API key status if available
+        if metadata and "api_key_status" in metadata:
+            meta_data["property"].append("API Key Status")
+            meta_data["value"].append(metadata["api_key_status"])
+        
+        # Add subscription requirement if available
+        if metadata and "requires_subscription" in metadata:
+            meta_data["property"].append("Requires Subscription")
+            meta_data["value"].append(str(metadata["requires_subscription"]))
+        
+        # Add data quality score if available
+        if metadata and "data_quality_score" in metadata:
+            meta_data["property"].append("Data Quality Score")
+            meta_data["value"].append(str(metadata["data_quality_score"]))
+        
         return pd.DataFrame(meta_data)
 
 

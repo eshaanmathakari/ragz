@@ -160,6 +160,15 @@ COINGECKO_USE_PRO=false  # Set to true/1/yes if using Pro tier
 COINDESK_API_KEY=your-key
 CRYPTOCOMPARE_API_KEY=your-key  # Legacy, use COINDESK_API_KEY
 
+# Dune Analytics API key (required for Dune queries)
+DUNE_API_KEY=your-dune-api-key-here
+
+# Optional - CoinGlass API key (browser scraping used by default)
+# COINGLASS_API_KEY=your-coinglass-key-here
+
+# Optional - CME Group API key (requires paid subscription)
+# CME_API_KEY=your-cme-api-key-here
+
 # Optional - Authentication and Session Management
 COOKIE_STORAGE_PATH=~/.data-fetch/cookies
 SESSION_TIMEOUT=3600
@@ -182,11 +191,23 @@ LOG_LEVEL=INFO
 
 The framework comes with several pre-configured data sources:
 
-1. **The Block** - BTC/ETH Exchange Volume 7DMA
+### Crypto Data Sources
+
+1. **The Block** - BTC/ETH Exchange Volume 7DMA, Exchange Volume, ETH vs BTC Volumes
 2. **CoinGecko** - Market data and exchange volumes (supports free and Pro API)
 3. **CoinDesk** - Historical price and volume data (formerly CryptoCompare)
+4. **CoinGlass** - BTC Overview, Spot Inflow/Outflow, Volatility Metrics (browser-based)
+5. **Dune Analytics** - ETH Staking and blockchain analytics (requires API key)
+6. **CME Group** - BTC Futures data (requires paid subscription)
+7. **Bitcoin.com** - Derivatives Snapshot (via CoinGlass data)
+8. **Invezz** - Liquidations data
+9. **24/7 Wall St** - Crypto Wipeout metrics
 
-See `config/websites.yaml` for all configured sites and examples.
+### Traditional Finance
+
+10. **Alpha Vantage** - Company overview and stock data (free tier available)
+
+See `config/websites.yaml` for all configured sites and examples. For API key setup, see `docs/API_KEYS.md`.
 
 ## Usage Examples
 

@@ -79,6 +79,14 @@ class ErrorHandler:
         if any(x in error_str for x in ["cloudflare", "captcha", "blocked", "403", "forbidden"]):
             return ErrorType.BOT_DETECTION
         
+        # Query timeout errors (for Dune)
+        if "timeout" in error_str and ("query" in error_str or "execution" in error_str):
+            return ErrorType.RATE_LIMIT  # Treat as rate limit issue
+        
+        # Selector not found errors (for DOM extraction)
+        if "selector" in error_str and ("not found" in error_str or "timeout" in error_str):
+            return ErrorType.PARSING
+        
         # Parsing errors
         if any(x in error_type for x in ["JSONDecode", "ValueError", "KeyError", "AttributeError", "ParseError"]):
             return ErrorType.PARSING
@@ -213,6 +221,7 @@ class ErrorHandler:
             self.logger.info(f"Suggestions: {', '.join(recovery.suggestions)}")
         
         return recovery
+
 
 
 

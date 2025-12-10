@@ -16,12 +16,17 @@ from .io_utils import get_config_path, ensure_dir, timestamp_now
 @dataclass
 class DataSource:
     """Configuration for a data source."""
-    type: str  # "api", "dom_table", "js_object"
+    type: str  # "api", "dom_table", "js_object", "browser"
     endpoint: Optional[str] = None
+    page_url: Optional[str] = None  # For browser-based extraction
     selector: Optional[str] = None
     method: str = "GET"
     requires_auth: bool = False
     headers: Dict[str, str] = field(default_factory=dict)
+    query_id: Optional[str] = None  # For Dune queries
+    max_poll_attempts: int = 30  # For Dune queries
+    poll_interval: int = 2  # For Dune queries
+    parameters: Dict[str, Any] = field(default_factory=dict)  # For Dune queries
 
 
 @dataclass
@@ -39,6 +44,8 @@ class SiteMetadata:
     created_by: str = "manual"
     last_successful_extraction: Optional[str] = None
     last_modified: Optional[str] = None
+    requires_subscription: bool = False
+    notes: Optional[str] = None
 
 
 @dataclass
@@ -91,9 +98,32 @@ class SiteConfig:
     def from_dict(cls, data: dict) -> "SiteConfig":
         """Create from dictionary."""
         # Handle nested dataclasses
-        data_source = DataSource(**data.get("data_source", {}))
+        data_source_dict = data.get("data_source", {})
+        # Ensure all DataSource fields are present
+        data_source = DataSource(
+            type=data_source_dict.get("type", "api"),
+            endpoint=data_source_dict.get("endpoint"),
+            page_url=data_source_dict.get("page_url"),
+            selector=data_source_dict.get("selector"),
+            method=data_source_dict.get("method", "GET"),
+            requires_auth=data_source_dict.get("requires_auth", False),
+            headers=data_source_dict.get("headers", {}),
+            query_id=data_source_dict.get("query_id"),
+            max_poll_attempts=data_source_dict.get("max_poll_attempts", 30),
+            poll_interval=data_source_dict.get("poll_interval", 2),
+            parameters=data_source_dict.get("parameters", {}),
+        )
         robots_policy = RobotsPolicy(**data.get("robots_policy", {"status": "UNKNOWN"}))
-        metadata = SiteMetadata(**data.get("metadata", {}))
+        # Handle metadata with optional fields
+        metadata_dict = data.get("metadata", {})
+        metadata = SiteMetadata(
+            created=metadata_dict.get("created", ""),
+            created_by=metadata_dict.get("created_by", "manual"),
+            last_successful_extraction=metadata_dict.get("last_successful_extraction"),
+            last_modified=metadata_dict.get("last_modified"),
+            requires_subscription=metadata_dict.get("requires_subscription", False),
+            notes=metadata_dict.get("notes"),
+        )
         auth_config = None
         if "auth_config" in data:
             auth_config = AuthConfig(**data.get("auth_config", {}))
@@ -250,18 +280,52 @@ class ConfigManager:
         self.logger.info(f"Removed site config: {site_id}")
         return True
     
-    def list_sites(self) -> List[Dict[str, str]]:
+    def list_sites(self) -> List[Dict[str, Any]]:
         """
-        List all configured sites.
+        List all configured sites with metadata.
         
         Returns:
-            List of dicts with id, name, and page_url
+            List of dictionaries with id, name, page_url, and metadata
         """
+        import os
         self.load()
-        return [
-            {"id": site.id, "name": site.name, "page_url": site.page_url}
-            for site in self._sites.values()
-        ]
+        sites_list = []
+        
+        for site in self._sites.values():
+            site_dict = {
+                "id": site.id,
+                "name": site.name,
+                "page_url": site.page_url,
+                "extraction_strategy": site.extraction_strategy,
+                "requires_auth": site.data_source.requires_auth if site.data_source else False,
+            }
+            
+            # Check API key status
+            api_key_status = "Not Required"
+            if site.auth_config:
+                if site.auth_config.api_key_env:
+                    api_key = os.getenv(site.auth_config.api_key_env)
+                    api_key_status = "Configured" if api_key else "Missing"
+                elif site.auth_config.api_key:
+                    api_key_status = "Configured"
+            
+            site_dict["api_key_status"] = api_key_status
+            
+            # Check subscription requirement
+            requires_subscription = False
+            if hasattr(site.metadata, "requires_subscription"):
+                requires_subscription = getattr(site.metadata, "requires_subscription", False)
+            elif "requires_subscription" in site.metadata.__dict__:
+                requires_subscription = site.metadata.__dict__.get("requires_subscription", False)
+            
+            site_dict["requires_subscription"] = requires_subscription
+            
+            # Add robots.txt status
+            site_dict["robots_status"] = site.robots_policy.status if site.robots_policy else "UNKNOWN"
+            
+            sites_list.append(site_dict)
+        
+        return sites_list
     
     def validate_config(self, site: SiteConfig) -> List[str]:
         """
