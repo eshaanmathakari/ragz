@@ -61,35 +61,22 @@ def format_dataframe_for_display(df):
             display_df[col] = display_df[col].apply(format_millions)
     return display_df
 
-def check_browser_available():
-    """Check if Playwright browser is available for scraping."""
-    try:
-        from playwright.sync_api import sync_playwright
-        # Just check if the module imports - don't actually launch browser
-        return True
-    except ImportError:
-        return False
-
 # Startup checks
 def check_environment():
     """Check environment setup and display warnings if needed."""
     warnings = []
     
     # Check OpenAI API key
-    # Replit uses environment variables via Secrets tool (no st.secrets needed)
     openai_key = os.getenv("OPENAI_API_KEY")
     
     if not openai_key:
         warnings.append("OpenAI API key not found. LLM-powered data detection will be disabled.")
     
     # Check Alpha Vantage API key
-    # Replit uses environment variables via Secrets tool (no st.secrets needed)
     alphavantage_key = os.getenv("ALPHA_VANTAGE_API_KEY")
     
     if not alphavantage_key:
         warnings.append("Alpha Vantage API key not found. Alpha Vantage data sources will be disabled.")
-    
-    # Playwright browser check removed - no warnings displayed
     
     return warnings
 
@@ -161,10 +148,9 @@ if startup_warnings:
 sites = api.get_configured_sites()
 
 # Main content
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2 = st.tabs([
     "Crypto",
-    "Market Sentiment",
-    "Dental ETFs"
+    "Market Sentiment"
 ])
 
 with tab1:
@@ -175,7 +161,7 @@ with tab1:
     """)
     
     # Filter crypto-related sites
-    crypto_keywords = ["theblock", "coingecko", "coinglass", "dune", "cryptocompare"]
+    crypto_keywords = ["theblock", "coingecko", "dune", "cryptocompare"]
     crypto_sites = [
         s for s in sites 
         if any(keyword in s.get("id", "").lower() or keyword in s.get("name", "").lower() 
@@ -559,236 +545,4 @@ with tab2:
             render_indicator_card(indicator)
     else:
         st.info("No market sentiment indicators configured. Please add them to websites.yaml.")
-
-with tab3:
-    st.subheader("Dental ETFs Data Sources")
-    st.markdown("""
-    This tab provides access to dental-themed ETF and stock data from multiple sources.
-    Data is scraped in real-time when you click the fetch buttons.
-    """)
-    
-    # Get dental ETF sites from configuration (exclude Yahoo Finance and FinanceCharts from UI)
-    dental_sites = [s for s in sites if s.get("id", "").startswith("dental_") 
-                    and s.get("id") != "dental_yahoo_etf_holdings"
-                    and s.get("id") != "dental_financecharts_performance"]
-    # Sort alphabetically by name
-    dental_sites = sorted(dental_sites, key=lambda x: x.get('name', '').lower())
-    
-    # Initialize session state for dental tab
-    if "dental_results" not in st.session_state:
-        st.session_state.dental_results = {}
-    
-    # Data Source Descriptions
-    DENTAL_SOURCE_INFO = {
-        "dental_swingtradebot_etf_list": {
-            "description": "Lists all ETFs with dental theme exposure and their weighting",
-            "data_points": "Symbol, Name, Grade, % Change, Weighting, Holdings"
-        },
-        "dental_fintel_sic_3843": {
-            "description": "SIC 3843 classified dental equipment and supplies companies",
-            "data_points": "Ticker, Company, Market Cap, Country"
-        },
-        "dental_portfoliopilot_risk_return": {
-            "description": "Risk/return metrics for dental stocks",
-            "data_points": "Ticker, Expected Return, Sharpe, Beta, Vol, P/E, Div Yield"
-        }
-    }
-    
-    if dental_sites:
-        # Display data sources in 2 columns
-        st.subheader("Available Data Sources")
-        cols = st.columns(2)
-        
-        for idx, site in enumerate(dental_sites):
-            site_id = site["id"]
-            info = DENTAL_SOURCE_INFO.get(site_id, {"description": "Dental ETF data", "data_points": "Various"})
-            
-            with cols[idx % 2]:
-                with st.container():
-                    st.markdown(f"### {site['name']}")
-                    st.caption(info['description'])
-                    st.markdown(f"**Data points:** {info['data_points']}")
-                    # Fix: Use the actual page_url from config, not a hardcoded link
-                    page_url = site.get('page_url', '#')
-                    if page_url and page_url != '#':
-                        st.markdown(f"[View Source →]({page_url})")
-                    st.markdown("---")
-        
-        # Fetch Data Section
-        st.subheader("Fetch Dental ETF Data")
-        
-        # Organized button layout - 2x2 grid for better alignment
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("Fetch All Sources", type="primary", key="fetch_all_dental", use_container_width=True):
-                with st.spinner("Fetching all dental ETF data..."):
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    for idx, site in enumerate(dental_sites):
-                        site_id = site["id"]
-                        progress = (idx + 1) / len(dental_sites)
-                        progress_bar.progress(progress)
-                        status_text.text(f"Fetching {site['name']}... ({idx + 1}/{len(dental_sites)})")
-                        
-                        try:
-                            # Standard scrape
-                            result = api.scrape_configured_site(
-                                site_id=site_id,
-                                use_stealth=True,
-                                override_robots=False,
-                            )
-                            
-                            st.session_state.dental_results[site_id] = (result, site)
-                        except Exception as e:
-                            st.session_state.dental_results[site_id] = (
-                                {"success": False, "error": str(e), "data": None, "rows": 0},
-                                site
-                            )
-                    
-                    progress_bar.progress(100)
-                    status_text.text("Complete!")
-        
-        with col2:
-            if st.button("Fetch SwingTradeBot ETF List", key="fetch_swingtradebot", use_container_width=True):
-                site = next((s for s in dental_sites if s["id"] == "dental_swingtradebot_etf_list"), None)
-                if site:
-                    with st.spinner(f"Fetching {site['name']}..."):
-                        try:
-                            result = api.scrape_configured_site(
-                                site_id=site["id"],
-                                use_stealth=True,
-                                override_robots=False,
-                            )
-                            st.session_state.dental_results[site["id"]] = (result, site)
-                        except Exception as e:
-                            st.session_state.dental_results[site["id"]] = (
-                                {"success": False, "error": str(e), "data": None, "rows": 0},
-                                site
-                            )
-        
-        # Second row of buttons
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("Fetch SIC 3843 Companies", key="fetch_fintel", use_container_width=True):
-                site = next((s for s in dental_sites if s["id"] == "dental_fintel_sic_3843"), None)
-                if site:
-                    with st.spinner(f"Fetching {site['name']}..."):
-                        try:
-                            result = api.scrape_configured_site(
-                                site_id=site["id"],
-                                use_stealth=True,
-                                override_robots=False,
-                            )
-                            st.session_state.dental_results[site["id"]] = (result, site)
-                        except Exception as e:
-                            st.session_state.dental_results[site["id"]] = (
-                                {"success": False, "error": str(e), "data": None, "rows": 0},
-                                site
-                            )
-        
-        with col2:
-            if st.button("Fetch Risk/Return Metrics", key="fetch_portfoliopilot", use_container_width=True):
-                site = next((s for s in dental_sites if s["id"] == "dental_portfoliopilot_risk_return"), None)
-                if site:
-                    with st.spinner(f"Fetching {site['name']}..."):
-                        try:
-                            result = api.scrape_configured_site(
-                                site_id=site["id"],
-                                use_stealth=True,
-                                override_robots=False,
-                            )
-                            st.session_state.dental_results[site["id"]] = (result, site)
-                        except Exception as e:
-                            st.session_state.dental_results[site["id"]] = (
-                                {"success": False, "error": str(e), "data": None, "rows": 0},
-                                site
-                            )
-        
-        # Display Results Section
-        if st.session_state.dental_results:
-            st.subheader("Results")
-            
-            # Summary metrics
-            successful = sum(1 for r, _ in st.session_state.dental_results.values() if r.get("success"))
-            total = len(st.session_state.dental_results)
-            st.info(f"Successfully fetched: {successful}/{total} data sources")
-            
-            # Display each result
-            for site_id, (result, site) in st.session_state.dental_results.items():
-                info = DENTAL_SOURCE_INFO.get(site_id, {})
-                
-                with st.expander(f"{site['name']}", expanded=result.get("success", False)):
-                    if result.get("success") and result.get("data") is not None and not result["data"].empty:
-                        st.success(f"Extracted {result['rows']} rows")
-                        
-                        # Data preview (latest first)
-                        preview_rows = st.slider(
-                            "Rows to display:",
-                            5, min(50, result["rows"]), 10,
-                            key=f"dental_preview_{site_id}"
-                        )
-                        # Sort by date descending if date column exists (latest first)
-                        preview_data = result["data"].copy()
-                        date_cols = [c for c in preview_data.columns if 'date' in c.lower()]
-                        if date_cols:
-                            preview_data = preview_data.sort_values(date_cols[0], ascending=False)
-                        # Format large numbers as millions
-                        display_data = format_dataframe_for_display(preview_data.head(preview_rows))
-                        st.dataframe(display_data, width='stretch')
-                        
-                        # Download button
-                        excel_bytes, filename = api.export_to_excel(
-                            result["data"],
-                            filename=f"dental_{site_id}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}"
-                        )
-                        
-                        if excel_bytes:
-                            st.download_button(
-                                label=f"Download {site['name']} Excel",
-                                data=excel_bytes,
-                                file_name=filename,
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                key=f"dental_download_{site_id}"
-                            )
-                    else:
-                        st.error(f"Failed: {result.get('error', 'Unknown error')}")
-            
-            # Combined Export Option
-            st.subheader("Export All Data")
-            
-            # Gather all successful dataframes
-            all_dfs = {}
-            for site_id, (result, site) in st.session_state.dental_results.items():
-                if result.get("success") and result.get("data") is not None and not result["data"].empty:
-                    # Use short name for sheet
-                    sheet_name = site_id.replace("dental_", "")[:31]  # Excel sheet name limit
-                    all_dfs[sheet_name] = result["data"]
-            
-            if all_dfs:
-                if st.button("Export All to Single Excel (Multiple Sheets)", key="export_all_dental"):
-                    try:
-                        # Combine into multi-sheet Excel
-                        excel_bytes, filename = api.export_dental_to_excel(
-                            all_dfs,
-                            filename=f"dental_etf_all_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}"
-                        )
-                        if excel_bytes:
-                            st.success("Combined Excel file generated!")
-                            st.download_button(
-                                label="Download Combined Excel",
-                                data=excel_bytes,
-                                file_name=filename,
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                key="download_combined_dental"
-                            )
-                        else:
-                            st.error("Failed to generate combined Excel file")
-                    except Exception as e:
-                        st.error(f"Export failed: {str(e)}")
-    else:
-        st.info("No dental ETF data sources configured. Please add them to websites.yaml with IDs starting with 'dental_'.")
-
 

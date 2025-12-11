@@ -1,11 +1,6 @@
 # Data-Fetch Framework Dependencies
 # Python 3.9+ required
 
-# Browser automation (for dynamic pages)
-playwright>=1.40.0
-# Note: After installing, run: playwright install chromium
-# For Streamlit Cloud, browsers are installed during deployment
-
 # Data manipulation
 pandas>=2.0.0
 numpy>=1.24.0
@@ -55,7 +50,4 @@ plotly>=5.18.0
 # Dune Analytics SDK (optional - falls back to manual API if not installed)
 # Note: Latest available version on PyPI is 1.10.0 (as of Dec 2025)
 dune-client>=1.0.0
-
-# Note: playwright-stealth is optional and can be installed separately
-# if needed: pip install playwright-stealth
 

@@ -36,9 +36,6 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Install Playwright browsers (for dynamic page loading)
-playwright install chromium
-
 # Copy environment template and add your API key
 cp env.example .env
 # Edit .env and add your OPENAI_API_KEY
@@ -49,39 +46,6 @@ cp env.example .env
 ### Streamlit Cloud
 
 The app can be deployed to Streamlit Cloud. See the Streamlit Cloud documentation for details.
-
-### Replit Deployment (Recommended for Playwright)
-
-Replit provides native support for Playwright browsers and better control over system dependencies.
-
-**Quick Setup:**
-
-1. **Import to Replit**
-   - Create a new Repl and import this project
-   - Set the working directory to `data-fetch/` if importing the entire repo
-
-2. **Configure Secrets**
-   - Click the lock icon (🔒) in Replit sidebar
-   - Add your API keys as secrets (they'll be available as environment variables)
-   - Required: `OPENAI_API_KEY`
-   - Optional: See `env.example` for all available keys
-
-3. **Run the App**
-   - Click "Run" - Replit will automatically:
-     - Install Python dependencies from `requirements.txt`
-     - Install Playwright browsers via `onBoot` command
-     - Start Streamlit on port 8501
-
-4. **Deploy (Optional)**
-   - Click "Deploy" to get a public URL
-   - The `.replit` file is already configured for deployment
-
-**For detailed instructions, see [REPLIT_SETUP.md](REPLIT_SETUP.md)**
-
-**Key Files:**
-- `.replit` - Replit configuration (entrypoint, run commands, Playwright setup)
-- `replit.nix` - System dependencies for Playwright browsers
-- `REPLIT_SETUP.md` - Complete migration and setup guide
 
 ## Usage
 
@@ -522,10 +486,7 @@ The framework includes intelligent error handling:
 1. **"OpenAI API key not found"**
    - Set `OPENAI_API_KEY` in your `.env` file
 
-2. **"Playwright not installed"**
-   - Run `playwright install chromium`
-
-3. **"Scraping disallowed by robots.txt"**
+2. **"Scraping disallowed by robots.txt"**
    - The website doesn't allow scraping that path
    - Try using a public API instead
    - Use `--override-robots` flag (use responsibly)
