@@ -76,27 +76,15 @@ def check_environment():
     warnings = []
     
     # Check OpenAI API key
+    # Replit uses environment variables via Secrets tool (no st.secrets needed)
     openai_key = os.getenv("OPENAI_API_KEY")
-    if not openai_key:
-        # Try Streamlit secrets (only available in Streamlit Cloud)
-        try:
-            openai_key = st.secrets.get("OPENAI_API_KEY", None)
-        except (AttributeError, FileNotFoundError):
-            # Secrets not available (local development without secrets.toml)
-            pass
     
     if not openai_key:
         warnings.append("OpenAI API key not found. LLM-powered data detection will be disabled.")
     
     # Check Alpha Vantage API key
+    # Replit uses environment variables via Secrets tool (no st.secrets needed)
     alphavantage_key = os.getenv("ALPHA_VANTAGE_API_KEY")
-    if not alphavantage_key:
-        # Try Streamlit secrets (only available in Streamlit Cloud)
-        try:
-            alphavantage_key = st.secrets.get("ALPHA_VANTAGE_API_KEY", None)
-        except (AttributeError, FileNotFoundError):
-            # Secrets not available (local development without secrets.toml)
-            pass
     
     if not alphavantage_key:
         warnings.append("Alpha Vantage API key not found. Alpha Vantage data sources will be disabled.")
