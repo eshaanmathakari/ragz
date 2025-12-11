@@ -33,7 +33,7 @@ sites:
   - id: coingecko_exchange_volume
     name: "CoinGecko - Exchange Volume"
     base_url: "https://api.coingecko.com"
-    page_url: "https://api.coingecko.com/api/v3/exchanges"
+    page_url: "https://www.coingecko.com/en/exchanges"
     extraction_strategy: "api_json"
     data_source:
       type: "api"
@@ -61,7 +61,7 @@ sites:
   - id: coingecko_btc_market_chart
     name: "CoinGecko - BTC Market Chart"
     base_url: "https://api.coingecko.com"
-    page_url: "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+    page_url: "https://www.coingecko.com/en/coins/bitcoin"
     extraction_strategy: "api_json"
     data_source:
       type: "api"
@@ -671,7 +671,7 @@ sites:
 
   # The Block - Exchange Volume (Browser-based with API fallback)
   - id: theblock_exchange_volume
-    name: "The Block - Exchange Volume (BTC, ETH and SOL)"
+    name: "The Block - BTC, ETH & SOL Combined (TOTAL3)"
     base_url: "https://www.theblock.co"
     page_url: "https://www.theblock.co/data/crypto-markets/spot/total-exchange-volume-daily"
     extraction_strategy: "api_json"
