@@ -406,7 +406,7 @@ with tab2:
                             hovermode='x unified'
                         )
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width='stretch')
 
                     # Data table - show ALL data (latest first)
                     if 'data' in data:
