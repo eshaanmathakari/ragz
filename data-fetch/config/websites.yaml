@@ -496,6 +496,174 @@ sites:
       api_key_env: "FRED_API_KEY"
       api_key_param: "api_key"
 
+  # OECD Consumer Confidence Amplitude Adjusted
+  - id: fred_oecd_amplitude_adjusted
+    name: "FRED - OECD Confidence Amplitude Adjusted"
+    base_url: "https://api.stlouisfed.org"
+    page_url: "https://fred.stlouisfed.org/series/CSCICP03USM665S"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://api.stlouisfed.org/fred/series/observations"
+      method: "GET"
+      requires_auth: true
+      series_id: "CSCICP03USM665S"
+      parameters:
+        file_type: "json"
+        limit: 1000
+        sort_order: "desc"
+    field_mappings:
+      date: "date"
+      value: "value"
+      series_name: "OECD Confidence Amplitude Adjusted"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "OECD Consumer Confidence for United States Amplitude Adjusted"
+    rate_limit: 0.5
+    auth_config:
+      auth_type: "api_key"
+      api_key_env: "FRED_API_KEY"
+      api_key_param: "api_key"
+
+  # Cleveland Fed 1-Year Expected Inflation
+  - id: fred_cleveland_1yr_inflation
+    name: "FRED - 1-Year Expected Inflation"
+    base_url: "https://api.stlouisfed.org"
+    page_url: "https://fred.stlouisfed.org/series/EXPINF1YR"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://api.stlouisfed.org/fred/series/observations"
+      method: "GET"
+      requires_auth: true
+      series_id: "EXPINF1YR"
+      parameters:
+        file_type: "json"
+        limit: 1000
+        sort_order: "desc"
+    field_mappings:
+      date: "date"
+      value: "value"
+      series_name: "1-Year Expected Inflation"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Cleveland Fed 1-Year Expected Inflation (median)"
+    rate_limit: 0.5
+    auth_config:
+      auth_type: "api_key"
+      api_key_env: "FRED_API_KEY"
+      api_key_param: "api_key"
+
+  # Cleveland Fed 10-Year Expected Inflation
+  - id: fred_cleveland_10yr_inflation
+    name: "FRED - 10-Year Expected Inflation"
+    base_url: "https://api.stlouisfed.org"
+    page_url: "https://fred.stlouisfed.org/series/EXPINF10YR"
+    extraction_strategy: "api_json"
+    data_source:
+      type: "api"
+      endpoint: "https://api.stlouisfed.org/fred/series/observations"
+      method: "GET"
+      requires_auth: true
+      series_id: "EXPINF10YR"
+      parameters:
+        file_type: "json"
+        limit: 1000
+        sort_order: "desc"
+    field_mappings:
+      date: "date"
+      value: "value"
+      series_name: "10-Year Expected Inflation"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "Cleveland Fed 10-Year Expected Inflation (median)"
+    rate_limit: 0.5
+    auth_config:
+      auth_type: "api_key"
+      api_key_env: "FRED_API_KEY"
+      api_key_param: "api_key"
+
+  # University of Michigan Consumer Surveys
+  - id: umich_consumer_surveys
+    name: "University of Michigan - Consumer Surveys"
+    base_url: "https://www.sca.isr.umich.edu"
+    page_url: "https://www.sca.isr.umich.edu/tables.html"
+    extraction_strategy: "csv_download"
+    data_source:
+      type: "csv_multi_file"
+      urls:
+        sentiment: "https://www.sca.isr.umich.edu/files/tbmics.csv"
+        components: "https://www.sca.isr.umich.edu/files/tbmiccice.csv"
+        inflation: "https://www.sca.isr.umich.edu/files/tbmpx1px5.csv"
+      requires_auth: false
+    field_mappings:
+      sentiment: "Index of Consumer Sentiment"
+      current_conditions: "Current Economic Conditions"
+      consumer_expectations: "Consumer Expectations"
+      year_ahead_inflation: "Year Ahead Inflation"
+      long_run_inflation: "Long Run Inflation"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "5 fields from UMich Surveys: ICS_ALL, ICC, ICE, PX_MD, PX5_MD. Monthly data 1952-present."
+    rate_limit: 2.0
+
+  # DG ECFIN EU Business and Consumer Surveys
+  - id: dg_ecfin_surveys
+    name: "DG ECFIN - EU Business and Consumer Surveys"
+    base_url: "https://ec.europa.eu/economy_finance/db_indicators/surveys"
+    page_url: "https://ec.europa.eu/economy_finance/db_indicators/surveys/index_en.htm"
+    extraction_strategy: "zip_excel_download"
+    data_source:
+      type: "zip_excel"
+      zip_url: "https://ec.europa.eu/economy_finance/db_indicators/surveys/documents/series/nace2_ecfin_2511/main_indicators_sa_nace2.zip"
+      excel_sheet: "MONTHLY"
+      requires_auth: false
+    field_mappings:
+      esi_eu: "Economic Sentiment Indicator (EU)"
+      esi_ea: "Economic Sentiment Indicator (Euro Area)"
+      eei_eu: "Employment Expectations Indicator (EU)"
+      eei_ea: "Employment Expectations Indicator (Euro Area)"
+      flash_consumer_confidence_ea: "Flash Consumer Confidence (Euro Area)"
+    robots_policy:
+      status: "ALLOWED"
+      last_checked: "2025-12-10T00:00:00Z"
+      override_approved: false
+    metadata:
+      created: "2025-12-10T00:00:00Z"
+      created_by: "manual"
+      last_successful_extraction: null
+      requires_subscription: false
+      notes: "5 EU indicators from MONTHLY sheet. Data from 1985-present."
+    rate_limit: 5.0
+
   # The Block - Exchange Volume (Browser-based with API fallback)
   - id: theblock_exchange_volume
     name: "The Block - Exchange Volume"

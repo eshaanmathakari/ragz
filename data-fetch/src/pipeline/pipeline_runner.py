@@ -238,6 +238,12 @@ class PipelineRunner:
                 elif site_id.startswith("fred"):
                     from ..scraper.fred_scraper import FredScraper
                     scraper = FredScraper(config=config)
+                elif site_id.startswith("umich"):
+                    from ..scraper.umich_scraper import UMichScraper
+                    scraper = UMichScraper(config=config)
+                elif site_id.startswith("dg_ecfin"):
+                    from ..scraper.dg_ecfin_scraper import DGECFINScraper
+                    scraper = DGECFINScraper(config=config)
                 elif site_id.startswith("coingecko"):
                     from ..scraper.fallback_scrapers import CoinGeckoScraper
                     scraper = CoinGeckoScraper(config=config)

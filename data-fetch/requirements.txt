@@ -50,6 +50,7 @@ typing-extensions>=4.0.0
 
 # Frontend (Streamlit)
 streamlit>=1.28.0
+plotly>=5.18.0
 
 # Dune Analytics SDK (optional - falls back to manual API if not installed)
 # Note: Latest available version on PyPI is 1.10.0 (as of Dec 2025)
