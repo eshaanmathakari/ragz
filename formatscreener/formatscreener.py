@@ -116,13 +116,14 @@ class DocxFormatScreener:
         color="#000000"
     )
 
-    def __init__(self, docx_path: str, strictness: str = "majority"):
+    def __init__(self, docx_path: str, strictness: str = "majority", cluster_consecutive: bool = True):
         """
         Initialize screener
 
         Args:
             docx_path: Path to the .docx file
             strictness: "strict" (all runs must match) or "majority" (dominant formatting wins)
+            cluster_consecutive: If True, group consecutive errors together (default: True)
 
         Raises:
             FileNotFoundError: If the document doesn't exist
@@ -130,6 +131,7 @@ class DocxFormatScreener:
         """
         self.docx_path = Path(docx_path)
         self.strictness = strictness
+        self.cluster_consecutive = cluster_consecutive
 
         # Validate file exists
         if not self.docx_path.exists():
@@ -178,8 +180,11 @@ class DocxFormatScreener:
         except:
             pass
 
-        # Could not resolve - likely inherited from document defaults
-        # In Word, this typically defaults to Calibri (11pt) or the theme font
+        # Could not resolve from explicit styling
+        # Try to check document defaults or assume Calibri as Word default
+        # For most modern Word documents, None typically means Calibri (Body) theme font
+        # However, we should return None and let validation handle it
+        # as "unable to determine font"
         return None
 
     def _resolve_font_size(self, run: Run, paragraph: Paragraph) -> Optional[float]:
@@ -360,9 +365,16 @@ class DocxFormatScreener:
         violations = []
         violation_details = {}
 
-        if observed.font and observed.font != rule.font:
+        # Font validation
+        # Note: None typically means theme font (often Calibri in modern Word docs)
+        # We treat None as Calibri for validation purposes
+        if observed.font is not None and observed.font != rule.font:
             violations.append("font_mismatch")
             violation_details["font_mismatch"] = f"Expected '{rule.font}' but found '{observed.font}'"
+        elif observed.font is None and rule.font != "Calibri":
+            # If font is None and we expect something other than Calibri, flag as unknown
+            violations.append("font_unknown")
+            violation_details["font_unknown"] = f"Expected '{rule.font}' but font could not be determined (likely theme font)"
 
         if observed.size is not None and abs(observed.size - rule.size) > 0.1:
             violations.append("size_mismatch")
@@ -508,6 +520,200 @@ class DocxFormatScreener:
 
         return results
 
+    def _parse_block_id(self, block_id: str) -> dict:
+        """
+        Parse block_id into components
+
+        Examples:
+        - "p5_r0" -> {"para": 5, "run": 0}
+        - "t0_r1_c2_p5_r3" -> {"table": 0, "row": 1, "cell": 2, "para": 5, "run": 3}
+
+        Returns:
+            Dictionary with parsed components (table, row, cell, para, run)
+        """
+        parts = block_id.split('_')
+        parsed = {}
+
+        for part in parts:
+            if part.startswith('t'):
+                parsed['table'] = int(part[1:])
+            elif part.startswith('r') and 'table' in parsed and 'row' not in parsed:
+                parsed['row'] = int(part[1:])
+            elif part.startswith('c'):
+                parsed['cell'] = int(part[1:])
+            elif part.startswith('p'):
+                parsed['para'] = int(part[1:])
+            elif part.startswith('r'):
+                parsed['run'] = int(part[1:])
+
+        return parsed
+
+    def _are_consecutive_blocks(self, block_id1: str, block_id2: str) -> bool:
+        """
+        Check if two block IDs are consecutive
+
+        Examples:
+        - p5 and p6 -> True
+        - p5_r0 and p5_r1 -> True (same paragraph, next run)
+        - p5_r0 and p6_r0 -> True (next paragraph)
+        - p5 and p7 -> False (gap)
+        - t0_r0_c0_p5 and t0_r0_c0_p6 -> True
+
+        Returns:
+            True if blocks are consecutive, False otherwise
+        """
+        parsed1 = self._parse_block_id(block_id1)
+        parsed2 = self._parse_block_id(block_id2)
+
+        # Must be in same table/row/cell context
+        if parsed1.get('table') != parsed2.get('table'):
+            return False
+        if parsed1.get('row') != parsed2.get('row'):
+            return False
+        if parsed1.get('cell') != parsed2.get('cell'):
+            return False
+
+        # Check paragraph and run indices
+        para1 = parsed1.get('para', 0)
+        para2 = parsed2.get('para', 0)
+        run1 = parsed1.get('run', 0)
+        run2 = parsed2.get('run', 0)
+
+        # Same paragraph, consecutive runs
+        if para1 == para2 and run2 == run1 + 1:
+            return True
+
+        # Consecutive paragraphs (runs can be different)
+        if para2 == para1 + 1:
+            return True
+
+        return False
+
+    def _should_cluster(self, result1: ValidationResult, result2: ValidationResult) -> bool:
+        """
+        Determine if two results should be clustered
+
+        Criteria:
+        - Same block_type (both heading or both body)
+        - Consecutive block IDs
+
+        Returns:
+            True if results should be clustered together
+        """
+        # Must be same block type
+        if result1.block_type != result2.block_type:
+            return False
+
+        # Must be consecutive
+        if not self._are_consecutive_blocks(result1.block_id, result2.block_id):
+            return False
+
+        return True
+
+    def _merge_results(self, results: List[ValidationResult]) -> ValidationResult:
+        """
+        Merge multiple ValidationResults into one clustered result
+
+        - Combine block_ids: "p5~p7" or "p5_r0~p6_r2"
+        - Combine text_previews: Join with newline, truncate if >200 chars
+        - Union of violations: Deduplicate violation types
+        - Merge violation_details: Combine all details
+        - Use first result's block_type and observed formatting
+
+        Returns:
+            Single merged ValidationResult representing the cluster
+        """
+        # Get range of block IDs
+        first_id = results[0].block_id
+        last_id = results[-1].block_id
+
+        # Create range notation
+        if len(results) > 1:
+            merged_block_id = f"{first_id}~{last_id}"
+        else:
+            merged_block_id = first_id
+
+        # Combine text previews
+        text_parts = [r.text_preview for r in results]
+        combined_text = "\n".join(text_parts)
+        if len(combined_text) > 200:
+            combined_text = combined_text[:197] + "..."
+
+        # Union of violations (deduplicate)
+        all_violations = []
+        seen = set()
+        for r in results:
+            for v in r.violations:
+                if v not in seen:
+                    all_violations.append(v)
+                    seen.add(v)
+
+        # Merge violation details
+        merged_details = {}
+        for r in results:
+            for k, v in r.violation_details.items():
+                if k not in merged_details:
+                    merged_details[k] = v
+                else:
+                    # Append if different
+                    if v not in merged_details[k]:
+                        merged_details[k] += f"; {v}"
+
+        # Use first result's formatting as representative
+        return ValidationResult(
+            block_id=merged_block_id,
+            block_type=results[0].block_type,
+            observed=results[0].observed,
+            status="FAIL",
+            violations=all_violations,
+            text_preview=combined_text,
+            violation_details=merged_details
+        )
+
+    def _cluster_consecutive_errors(self, results: List[ValidationResult]) -> List[ValidationResult]:
+        """
+        Cluster consecutive formatting errors into groups
+
+        Clustering rules:
+        - Consecutive block_ids (p5, p6, p7 or p5_r0, p5_r1, etc.)
+        - Same block_type (heading or body)
+
+        Returns:
+            List of clustered ValidationResults with combined information
+        """
+        if not results:
+            return results
+
+        # Sort by block_id to ensure sequential processing
+        sorted_results = sorted(results, key=lambda r: self._parse_block_id(r.block_id).get('para', 0) * 1000 + self._parse_block_id(r.block_id).get('run', 0))
+
+        clusters = []
+        current_cluster = [sorted_results[0]]
+
+        for i in range(1, len(sorted_results)):
+            prev = sorted_results[i-1]
+            curr = sorted_results[i]
+
+            if self._should_cluster(prev, curr):
+                current_cluster.append(curr)
+            else:
+                # Finalize current cluster
+                if len(current_cluster) > 1:
+                    clusters.append(self._merge_results(current_cluster))
+                else:
+                    clusters.append(current_cluster[0])
+
+                # Start new cluster
+                current_cluster = [curr]
+
+        # Don't forget the last cluster
+        if len(current_cluster) > 1:
+            clusters.append(self._merge_results(current_cluster))
+        else:
+            clusters.append(current_cluster[0])
+
+        return clusters
+
     def calculate_score(self, results: List[ValidationResult]) -> Dict:
         """
         [DEPRECATED] Calculate compliance score from validation results
@@ -635,6 +841,8 @@ class DocxFormatScreener:
 
         The report only includes runs/paragraphs with formatting issues.
         PASS results are not included for cleaner output.
+
+        If cluster_consecutive is True (default), consecutive errors are grouped together.
         """
         results = self.validate_document()
 
@@ -642,6 +850,10 @@ class DocxFormatScreener:
         # Since validate_document() now only returns failures, this is already done
         # But keeping filter for clarity and backward compatibility
         inconsistencies = [r for r in results if r.status == "FAIL"]
+
+        # Apply clustering if enabled
+        if self.cluster_consecutive and inconsistencies:
+            inconsistencies = self._cluster_consecutive_errors(inconsistencies)
 
         # Build report with clean format
         report = {
