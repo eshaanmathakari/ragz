@@ -79,11 +79,10 @@ class FormatRule:
 
 @dataclass
 class ValidationResult:
-    """Result of validating a single block (paragraph)"""
+    """Result of validating a single block (paragraph or run)"""
     block_id: str
     block_type: str  # "heading" or "body"
     observed: Dict[str, Any]
-    expected: Dict[str, Any]
     status: str  # "PASS" or "FAIL"
     violations: List[str]
     text_preview: str = ""  # First 50 chars of paragraph text
@@ -326,6 +325,32 @@ class DocxFormatScreener:
 
         return False
 
+    def _build_observed_dict(self, observed: FormatObservation) -> Dict:
+        """
+        Build observed dictionary with null values and black color omitted
+
+        Only includes:
+        - Non-null font, size, bold
+        - Italic/underline only when True (not False/None)
+        - Color only when not black (#000000)
+        """
+        observed_dict = {}
+
+        if observed.font is not None:
+            observed_dict["font"] = observed.font
+        if observed.size is not None:
+            observed_dict["size"] = observed.size
+        if observed.bold is not None:
+            observed_dict["bold"] = observed.bold
+        if observed.italic is not None and observed.italic:
+            observed_dict["italic"] = observed.italic
+        if observed.underline is not None and observed.underline:
+            observed_dict["underline"] = observed.underline
+        if observed.color and observed.color.lower() != "#000000":
+            observed_dict["color"] = observed.color
+
+        return observed_dict
+
     def _validate_against_rule(self, observed: FormatObservation, rule: FormatRule) -> tuple[str, List[str], Dict[str, str]]:
         """
         Validate observed formatting against a rule
@@ -362,8 +387,61 @@ class DocxFormatScreener:
         status = "PASS" if len(violations) == 0 else "FAIL"
         return status, violations, violation_details
 
+    def validate_paragraph_runs(self, paragraph: Paragraph, para_index: int) -> List[ValidationResult]:
+        """
+        Validate individual runs (words/clusters) within a paragraph
+
+        Returns a list of ValidationResults, one for each run with formatting issues.
+        If all runs conform, returns empty list.
+        """
+        text = paragraph.text.strip()
+        if not text:
+            return []
+
+        is_heading = self._is_heading(paragraph)
+        block_type = "heading" if is_heading else "body"
+        rule = self.HEADING_RULE if is_heading else self.BODY_RULE
+
+        results = []
+        run_index = 0
+
+        for run in paragraph.runs:
+            run_text = run.text.strip()
+            if not run_text:  # Skip empty runs
+                continue
+
+            # Extract formatting for this run
+            observed = self._extract_run_formatting(run, paragraph)
+
+            # Validate against rule
+            status, violations, violation_details = self._validate_against_rule(observed, rule)
+
+            if status == "FAIL":
+                # Create result only for failed runs
+                observed_dict = self._build_observed_dict(observed)
+
+                result = ValidationResult(
+                    block_id=f"p{para_index}_r{run_index}",
+                    block_type=block_type,
+                    observed=observed_dict,
+                    status=status,
+                    violations=violations,
+                    text_preview=run_text[:50] + "..." if len(run_text) > 50 else run_text,
+                    violation_details=violation_details
+                )
+                results.append(result)
+
+            run_index += 1
+
+        return results
+
     def validate_paragraph(self, paragraph: Paragraph, para_index: int) -> ValidationResult:
-        """Validate a single paragraph"""
+        """
+        [DEPRECATED] Validate a single paragraph using dominant formatting
+
+        This method is kept for backward compatibility.
+        For new code, use validate_paragraph_runs() for run-level detection.
+        """
         # Skip empty paragraphs
         text = paragraph.text.strip()
         if not text:
@@ -383,26 +461,14 @@ class DocxFormatScreener:
         # Create text preview (first 50 chars)
         text_preview = text[:50] + "..." if len(text) > 50 else text
 
+        # Build clean observed dict
+        observed_dict = self._build_observed_dict(observed)
+
         # Create result
         result = ValidationResult(
             block_id=f"p_{para_index}",
             block_type=block_type,
-            observed={
-                "font": observed.font,
-                "size": observed.size,
-                "bold": observed.bold,
-                "italic": observed.italic,
-                "underline": observed.underline,
-                "color": observed.color
-            },
-            expected={
-                "font": rule.font,
-                "size": rule.size,
-                "bold": rule.bold,
-                "italic": rule.italic,
-                "underline": rule.underline,
-                "color": rule.color
-            },
+            observed=observed_dict,
             status=status,
             violations=violations,
             text_preview=text_preview,
@@ -412,15 +478,19 @@ class DocxFormatScreener:
         return result
 
     def validate_document(self) -> List[ValidationResult]:
-        """Validate entire document and return results"""
+        """
+        Validate entire document at run-level and return results
+
+        Returns a list of ValidationResults, one for each run with formatting issues.
+        """
         results = []
         para_counter = 0
 
         # Validate regular paragraphs
         for paragraph in self.document.paragraphs:
-            result = self.validate_paragraph(paragraph, para_counter)
-            if result:  # Skip None (empty paragraphs)
-                results.append(result)
+            run_results = self.validate_paragraph_runs(paragraph, para_counter)
+            results.extend(run_results)
+            if paragraph.text.strip():  # Count non-empty paragraphs
                 para_counter += 1
 
         # Validate paragraphs inside tables
@@ -428,18 +498,23 @@ class DocxFormatScreener:
             for row_idx, row in enumerate(table.rows):
                 for cell_idx, cell in enumerate(row.cells):
                     for cell_para in cell.paragraphs:
-                        result = self.validate_paragraph(cell_para, para_counter)
-                        if result:
-                            # Add table location info to block_id
-                            result.block_id = f"t{table_idx}_r{row_idx}_c{cell_idx}_p{para_counter}"
-                            results.append(result)
+                        run_results = self.validate_paragraph_runs(cell_para, para_counter)
+                        # Update block_id to include table location
+                        for result in run_results:
+                            result.block_id = f"t{table_idx}_r{row_idx}_c{cell_idx}_{result.block_id}"
+                        results.extend(run_results)
+                        if cell_para.text.strip():  # Count non-empty paragraphs
                             para_counter += 1
 
         return results
 
     def calculate_score(self, results: List[ValidationResult]) -> Dict:
         """
-        Calculate compliance score from validation results
+        [DEPRECATED] Calculate compliance score from validation results
+
+        This method is kept for backward compatibility.
+        For new code, use generate_report() instead which provides
+        detailed inconsistency information without scoring.
 
         Returns:
             Dictionary with score (1-10), pass_rate, and counts
@@ -471,7 +546,11 @@ class DocxFormatScreener:
 
     def categorize_violations(self, results: List[ValidationResult]) -> Dict[str, int]:
         """
-        Categorize violations by type
+        [DEPRECATED] Categorize violations by type
+
+        This method is kept for backward compatibility.
+        For new code, use generate_report() instead which provides
+        detailed inconsistency information with violation_details.
 
         Returns:
             Dictionary with counts for each violation category
@@ -505,7 +584,11 @@ class DocxFormatScreener:
 
     def score_document(self) -> Dict:
         """
-        Main API method: Score document and return structured results
+        [DEPRECATED] Main API method: Score document and return structured results
+
+        This method is kept for backward compatibility.
+        For new code, use generate_report() instead which provides
+        detailed inconsistency information without scoring.
 
         Returns:
             Dictionary containing:
@@ -544,29 +627,33 @@ class DocxFormatScreener:
 
     def generate_report(self, output_path: Optional[str] = None) -> Dict:
         """
-        Generate validation report
+        Generate validation report with formatting inconsistencies only
 
         Returns a dict with:
-        - summary: overall stats
-        - results: per-paragraph results
+        - document: document filename
+        - inconsistencies: list of formatting violations only (no PASS results)
+
+        The report only includes runs/paragraphs with formatting issues.
+        PASS results are not included for cleaner output.
         """
         results = self.validate_document()
 
-        # Summary stats
-        total = len(results)
-        passed = sum(1 for r in results if r.status == "PASS")
-        failed = total - passed
+        # Filter to only show failed results (inconsistencies)
+        # Since validate_document() now only returns failures, this is already done
+        # But keeping filter for clarity and backward compatibility
+        inconsistencies = [r for r in results if r.status == "FAIL"]
 
+        # Build report with clean format
         report = {
-            "document": str(self.docx_path),
-            "summary": {
-                "total_blocks": total,
-                "passed": passed,
-                "failed": failed,
-                "pass_rate": f"{(passed/total*100) if total > 0 else 0:.1f}%"
-            },
-            "results": [asdict(r) for r in results]
+            "document": str(self.docx_path.name),  # Just filename, not full path
+            "inconsistencies": []
         }
+
+        # Convert results to dicts and remove status field (all are FAIL)
+        for r in inconsistencies:
+            result_dict = asdict(r)
+            result_dict.pop('status', None)  # Remove status field
+            report["inconsistencies"].append(result_dict)
 
         # Save to file if requested
         if output_path:
@@ -577,7 +664,12 @@ class DocxFormatScreener:
         return report
 
     def print_summary(self):
-        """Print a human-readable summary (no text content)"""
+        """
+        [DEPRECATED] Print a human-readable summary (no text content)
+
+        This method is kept for backward compatibility.
+        For new code, use generate_report() and format the output as needed.
+        """
         result = self.score_document()
 
         print(f"\n{'='*70}")
@@ -603,7 +695,10 @@ class DocxFormatScreener:
 
 def quick_score(docx_path: str) -> float:
     """
-    Quick scoring function for simple use cases
+    [DEPRECATED] Quick scoring function for simple use cases
+
+    This function is kept for backward compatibility.
+    For new code, use DocxFormatScreener().generate_report() instead.
 
     Args:
         docx_path: Path to the DOCX file
@@ -642,17 +737,30 @@ def main():
         sys.exit(1)
 
     # Create screener and run validation
-    screener = DocxFormatScreener(docx_path, strictness="majority")
+    try:
+        screener = DocxFormatScreener(docx_path, strictness="majority")
+        report = screener.generate_report(output_path)
 
-    # Print summary to console
-    screener.print_summary()
+        # Print simple summary
+        print(f"\n{'='*70}")
+        print(f"DOCX Format Screening Report: {Path(docx_path).name}")
+        print(f"{'='*70}\n")
 
-    # Generate JSON report
-    screener.generate_report(output_path)
+        inconsistencies_count = len(report['inconsistencies'])
+        if inconsistencies_count == 0:
+            print("✓ No formatting inconsistencies found!")
+        else:
+            print(f"Found {inconsistencies_count} formatting inconsistencies")
+            if output_path:
+                print(f"\nDetails saved to: {output_path}")
 
-    print(f"\n{'='*70}")
-    print("Validation complete!")
-    print(f"{'='*70}\n")
+        print(f"\n{'='*70}")
+        print("Validation complete!")
+        print(f"{'='*70}\n")
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
