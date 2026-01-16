@@ -4,9 +4,9 @@ DOCX Format Screener - Style Validation & Scoring Tool
 Validates formatting rules for Word documents and provides a compliance score (1-10).
 
 Validation Rules:
-- Headings: Times New Roman, 14pt, Bold, Underline, Black
-- Body: Times New Roman, 12pt, No Bold, No Underline, Black
-- Also validates: Font color, Italic status
+- Headings: Calibri, 11pt, Bold, Black
+- Body: Calibri, 11pt, No Bold, Black
+- Also validates: Font color, Italic status, Underline status
 
 Usage Examples:
 
@@ -86,6 +86,13 @@ class ValidationResult:
     expected: Dict[str, Any]
     status: str  # "PASS" or "FAIL"
     violations: List[str]
+    text_preview: str = ""  # First 50 chars of paragraph text
+    violation_details: Dict[str, str] = None  # Human-readable violation messages
+
+    def __post_init__(self):
+        """Initialize violation_details if not provided"""
+        if self.violation_details is None:
+            self.violation_details = {}
 
 
 class DocxFormatScreener:
@@ -93,17 +100,17 @@ class DocxFormatScreener:
 
     # Define your rules here
     HEADING_RULE = FormatRule(
-        font="Times New Roman",  # change based on client needs
-        size=14.0,
+        font="Calibri",  # change based on client needs
+        size=11.0,
         bold=True,
         italic=False,
-        underline=True,
+        underline=False,
         color="#000000"
     )
 
     BODY_RULE = FormatRule(
-        font="Times New Roman",
-        size=12.0,
+        font="Calibri",
+        size=11.0,
         bold=False,
         italic=False,
         underline=False,
@@ -291,7 +298,9 @@ class DocxFormatScreener:
 
         Strategy:
         1. Check if style name contains "Heading"
-        2. Fallback: check if formatting matches heading rule (size 14 + bold + underline)
+        2. Fallback heuristics:
+           - Text is bold AND all uppercase (common pattern: EXPERIENCE, SKILLS)
+           - Text is bold AND paragraph text is short (<50 chars) AND followed by content
         """
         style_name = paragraph.style.name if paragraph.style else ""
 
@@ -299,43 +308,59 @@ class DocxFormatScreener:
         if "Heading" in style_name or "heading" in style_name:
             return True
 
-        # Fallback: heuristic based on formatting
+        # Fallback: heuristic based on formatting and content
         dominant = self._get_dominant_formatting(paragraph)
-        if (dominant.size and dominant.size >= 14 and
-            dominant.bold and
-            dominant.underline):
+        text = paragraph.text.strip()
+
+        # Check if text is bold
+        if not dominant.bold:
+            return False
+
+        # Heuristic: All caps text that's bold (e.g., EXPERIENCE, SKILLS, EDUCATION)
+        if text and text.isupper() and len(text) >= 2:
+            return True
+
+        # Heuristic: Short bold text (likely a section heading)
+        if text and len(text) < 50 and len(text) >= 2:
             return True
 
         return False
 
-    def _validate_against_rule(self, observed: FormatObservation, rule: FormatRule) -> tuple[str, List[str]]:
+    def _validate_against_rule(self, observed: FormatObservation, rule: FormatRule) -> tuple[str, List[str], Dict[str, str]]:
         """
         Validate observed formatting against a rule
 
-        Returns: (status, violations)
+        Returns: (status, violations_list, violation_details_dict)
         """
         violations = []
+        violation_details = {}
 
         if observed.font and observed.font != rule.font:
-            violations.append(f"Font mismatch: expected '{rule.font}', got '{observed.font}'")
+            violations.append("font_mismatch")
+            violation_details["font_mismatch"] = f"Expected '{rule.font}' but found '{observed.font}'"
 
         if observed.size is not None and abs(observed.size - rule.size) > 0.1:
-            violations.append(f"Size mismatch: expected {rule.size}pt, got {observed.size}pt")
+            violations.append("size_mismatch")
+            violation_details["size_mismatch"] = f"Expected {rule.size}pt but found {observed.size}pt"
 
         if observed.bold is not None and observed.bold != rule.bold:
-            violations.append(f"Bold mismatch: expected {rule.bold}, got {observed.bold}")
+            violations.append("bold_mismatch")
+            violation_details["bold_mismatch"] = f"Expected bold={rule.bold} but found bold={observed.bold}"
 
         if observed.italic is not None and observed.italic != rule.italic:
-            violations.append(f"Italic mismatch: expected {rule.italic}, got {observed.italic}")
+            violations.append("italic_mismatch")
+            violation_details["italic_mismatch"] = f"Expected italic={rule.italic} but found italic={observed.italic}"
 
         if observed.underline is not None and observed.underline != rule.underline:
-            violations.append(f"Underline mismatch: expected {rule.underline}, got {observed.underline}")
+            violations.append("underline_mismatch")
+            violation_details["underline_mismatch"] = f"Expected underline={rule.underline} but found underline={observed.underline}"
 
         if observed.color and observed.color.lower() != rule.color.lower():
-            violations.append(f"Color mismatch: expected {rule.color}, got {observed.color}")
+            violations.append("color_mismatch")
+            violation_details["color_mismatch"] = f"Expected {rule.color} but found {observed.color}"
 
         status = "PASS" if len(violations) == 0 else "FAIL"
-        return status, violations
+        return status, violations, violation_details
 
     def validate_paragraph(self, paragraph: Paragraph, para_index: int) -> ValidationResult:
         """Validate a single paragraph"""
@@ -353,9 +378,12 @@ class DocxFormatScreener:
         observed = self._get_dominant_formatting(paragraph)
 
         # Validate
-        status, violations = self._validate_against_rule(observed, rule)
+        status, violations, violation_details = self._validate_against_rule(observed, rule)
 
-        # Create result (no text_preview for privacy/integration)
+        # Create text preview (first 50 chars)
+        text_preview = text[:50] + "..." if len(text) > 50 else text
+
+        # Create result
         result = ValidationResult(
             block_id=f"p_{para_index}",
             block_type=block_type,
@@ -376,7 +404,9 @@ class DocxFormatScreener:
                 "color": rule.color
             },
             status=status,
-            violations=violations
+            violations=violations,
+            text_preview=text_preview,
+            violation_details=violation_details
         )
 
         return result
