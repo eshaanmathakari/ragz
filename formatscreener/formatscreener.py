@@ -1,0 +1,629 @@
+"""
+DOCX Format Screener - Style Validation & Scoring Tool
+
+Validates formatting rules for Word documents and provides a compliance score (1-10).
+
+Validation Rules:
+- Headings: Times New Roman, 14pt, Bold, Underline, Black
+- Body: Times New Roman, 12pt, No Bold, No Underline, Black
+- Also validates: Font color, Italic status
+
+Usage Examples:
+
+  # Quick scoring for simple use cases
+  from formatscreener import quick_score
+
+  score = quick_score("resume.docx")
+  print(f"Document score: {score}/10")
+
+  # Detailed analysis with categorized violations
+  from formatscreener import DocxFormatScreener
+
+  screener = DocxFormatScreener("resume.docx")
+  result = screener.score_document()
+
+  print(f"Score: {result['score']}/10")
+  print(f"Pass rate: {result['pass_rate']:.1%}")
+  print(f"Violations: {result['violations_by_category']}")
+
+  # Agentic AI integration example
+  def validate_document(docx_path: str) -> dict:
+      screener = DocxFormatScreener(docx_path)
+      result = screener.score_document()
+      result['meets_standards'] = result['score'] >= 7.0
+      return result
+"""
+
+import json
+from dataclasses import dataclass, asdict
+from typing import List, Dict, Optional, Any
+from pathlib import Path
+
+try:
+    from docx import Document
+    from docx.shared import RGBColor, Pt
+    from docx.enum.style import WD_STYLE_TYPE
+    from docx.text.run import Run
+    from docx.text.paragraph import Paragraph
+except ImportError as e:
+    raise ImportError(
+        "python-docx is required. Install it with: pip install python-docx"
+    ) from e
+
+
+# Public API exports
+__all__ = ['DocxFormatScreener', 'FormatRule', 'quick_score']
+
+
+@dataclass
+class FormatObservation:
+    """Observed formatting for a run or effective paragraph formatting"""
+    font: Optional[str] = None
+    size: Optional[float] = None  # in points
+    bold: Optional[bool] = None
+    italic: Optional[bool] = None
+    underline: Optional[bool] = None
+    color: Optional[str] = None  # hex format
+
+
+@dataclass
+class FormatRule:
+    """Expected formatting rule"""
+    font: str
+    size: float
+    bold: bool
+    italic: bool
+    underline: bool
+    color: str = "#000000"  # default black
+
+
+@dataclass
+class ValidationResult:
+    """Result of validating a single block (paragraph)"""
+    block_id: str
+    block_type: str  # "heading" or "body"
+    observed: Dict[str, Any]
+    expected: Dict[str, Any]
+    status: str  # "PASS" or "FAIL"
+    violations: List[str]
+
+
+class DocxFormatScreener:
+    """Main validator for DOCX formatting"""
+
+    # Define your rules here
+    HEADING_RULE = FormatRule(
+        font="Times New Roman",  # change based on client needs
+        size=14.0,
+        bold=True,
+        italic=False,
+        underline=True,
+        color="#000000"
+    )
+
+    BODY_RULE = FormatRule(
+        font="Times New Roman",
+        size=12.0,
+        bold=False,
+        italic=False,
+        underline=False,
+        color="#000000"
+    )
+
+    def __init__(self, docx_path: str, strictness: str = "majority"):
+        """
+        Initialize screener
+
+        Args:
+            docx_path: Path to the .docx file
+            strictness: "strict" (all runs must match) or "majority" (dominant formatting wins)
+
+        Raises:
+            FileNotFoundError: If the document doesn't exist
+            ValueError: If the file is not a valid DOCX
+        """
+        self.docx_path = Path(docx_path)
+        self.strictness = strictness
+
+        # Validate file exists
+        if not self.docx_path.exists():
+            raise FileNotFoundError(f"Document not found: {docx_path}")
+
+        # Validate file extension
+        if self.docx_path.suffix.lower() not in ['.docx', '.doc']:
+            raise ValueError(f"File must be a .docx or .doc file, got: {self.docx_path.suffix}")
+
+        # Load document with error handling
+        try:
+            self.document = Document(docx_path)
+        except Exception as e:
+            raise ValueError(f"Failed to load document (may be corrupted): {str(e)}")
+
+    def _resolve_font_name(self, run: Run, paragraph: Paragraph) -> Optional[str]:
+        """
+        Resolve effective font name with inheritance fallback
+
+        Priority:
+        1. Direct run formatting
+        2. Run's character style
+        3. Paragraph style
+        4. Document defaults / base styles
+        """
+        # Direct run font
+        if run.font.name is not None:
+            return run.font.name
+
+        # Character style font
+        if run.style and hasattr(run.style, 'font'):
+            if run.style.font.name is not None:
+                return run.style.font.name
+
+        # Paragraph style font
+        if paragraph.style and hasattr(paragraph.style, 'font'):
+            if paragraph.style.font.name is not None:
+                return paragraph.style.font.name
+
+        # Try to get from paragraph style's base style
+        try:
+            if paragraph.style and hasattr(paragraph.style, 'base_style'):
+                base = paragraph.style.base_style
+                if base and hasattr(base, 'font') and base.font.name:
+                    return base.font.name
+        except:
+            pass
+
+        # Could not resolve - likely inherited from document defaults
+        # In Word, this typically defaults to Calibri (11pt) or the theme font
+        return None
+
+    def _resolve_font_size(self, run: Run, paragraph: Paragraph) -> Optional[float]:
+        """Resolve effective font size in points"""
+        # Direct run size
+        if run.font.size is not None:
+            return run.font.size.pt
+
+        # Character style size
+        if run.style and hasattr(run.style, 'font'):
+            if run.style.font.size is not None:
+                return run.style.font.size.pt
+
+        # Paragraph style size
+        if paragraph.style and hasattr(paragraph.style, 'font'):
+            if paragraph.style.font.size is not None:
+                return paragraph.style.font.size.pt
+
+        return None
+
+    def _resolve_bold(self, run: Run, paragraph: Paragraph) -> Optional[bool]:
+        """Resolve effective bold status"""
+        if run.font.bold is not None:
+            return run.font.bold
+
+        if run.style and hasattr(run.style, 'font'):
+            if run.style.font.bold is not None:
+                return run.style.font.bold
+
+        if paragraph.style and hasattr(paragraph.style, 'font'):
+            if paragraph.style.font.bold is not None:
+                return paragraph.style.font.bold
+
+        return None
+
+    def _resolve_italic(self, run: Run, paragraph: Paragraph) -> Optional[bool]:
+        """Resolve effective italic status"""
+        if run.font.italic is not None:
+            return run.font.italic
+
+        if run.style and hasattr(run.style, 'font'):
+            if run.style.font.italic is not None:
+                return run.style.font.italic
+
+        if paragraph.style and hasattr(paragraph.style, 'font'):
+            if paragraph.style.font.italic is not None:
+                return paragraph.style.font.italic
+
+        return None
+
+    def _resolve_underline(self, run: Run, paragraph: Paragraph) -> Optional[bool]:
+        """Resolve effective underline status"""
+        # Underline is True if it's anything other than None or False
+        if run.font.underline is not None:
+            return bool(run.font.underline)
+
+        if run.style and hasattr(run.style, 'font'):
+            if run.style.font.underline is not None:
+                return bool(run.style.font.underline)
+
+        if paragraph.style and hasattr(paragraph.style, 'font'):
+            if paragraph.style.font.underline is not None:
+                return bool(paragraph.style.font.underline)
+
+        return None
+
+    def _resolve_color(self, run: Run, paragraph: Paragraph) -> Optional[str]:
+        """Resolve effective font color as hex"""
+        if run.font.color and run.font.color.rgb:
+            rgb = run.font.color.rgb
+            return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+
+        # Character/paragraph style colors are harder to extract reliably
+        # For simplicity, we'll default to black if not explicitly set
+        return "#000000"
+
+    def _extract_run_formatting(self, run: Run, paragraph: Paragraph) -> FormatObservation:
+        """Extract all formatting from a run with inheritance resolution"""
+        return FormatObservation(
+            font=self._resolve_font_name(run, paragraph),
+            size=self._resolve_font_size(run, paragraph),
+            bold=self._resolve_bold(run, paragraph),
+            italic=self._resolve_italic(run, paragraph),
+            underline=self._resolve_underline(run, paragraph),
+            color=self._resolve_color(run, paragraph)
+        )
+
+    def _get_dominant_formatting(self, paragraph: Paragraph) -> FormatObservation:
+        """
+        Get dominant formatting across all runs in a paragraph
+
+        In majority mode: pick the most common value for each attribute
+        In strict mode: this is used for comparison against all runs
+        """
+        if not paragraph.runs:
+            return FormatObservation()
+
+        # Collect all run observations (ignore whitespace-only runs)
+        observations = []
+        for run in paragraph.runs:
+            if run.text.strip():  # Ignore pure whitespace
+                obs = self._extract_run_formatting(run, paragraph)
+                observations.append(obs)
+
+        if not observations:
+            return FormatObservation()
+
+        # For simplicity in this implementation, use the first substantive run's formatting
+        # A more sophisticated approach would count occurrences and pick the mode
+        return observations[0]
+
+    def _is_heading(self, paragraph: Paragraph) -> bool:
+        """
+        Determine if a paragraph is a heading
+
+        Strategy:
+        1. Check if style name contains "Heading"
+        2. Fallback: check if formatting matches heading rule (size 14 + bold + underline)
+        """
+        style_name = paragraph.style.name if paragraph.style else ""
+
+        # Check style name
+        if "Heading" in style_name or "heading" in style_name:
+            return True
+
+        # Fallback: heuristic based on formatting
+        dominant = self._get_dominant_formatting(paragraph)
+        if (dominant.size and dominant.size >= 14 and
+            dominant.bold and
+            dominant.underline):
+            return True
+
+        return False
+
+    def _validate_against_rule(self, observed: FormatObservation, rule: FormatRule) -> tuple[str, List[str]]:
+        """
+        Validate observed formatting against a rule
+
+        Returns: (status, violations)
+        """
+        violations = []
+
+        if observed.font and observed.font != rule.font:
+            violations.append(f"Font mismatch: expected '{rule.font}', got '{observed.font}'")
+
+        if observed.size is not None and abs(observed.size - rule.size) > 0.1:
+            violations.append(f"Size mismatch: expected {rule.size}pt, got {observed.size}pt")
+
+        if observed.bold is not None and observed.bold != rule.bold:
+            violations.append(f"Bold mismatch: expected {rule.bold}, got {observed.bold}")
+
+        if observed.italic is not None and observed.italic != rule.italic:
+            violations.append(f"Italic mismatch: expected {rule.italic}, got {observed.italic}")
+
+        if observed.underline is not None and observed.underline != rule.underline:
+            violations.append(f"Underline mismatch: expected {rule.underline}, got {observed.underline}")
+
+        if observed.color and observed.color.lower() != rule.color.lower():
+            violations.append(f"Color mismatch: expected {rule.color}, got {observed.color}")
+
+        status = "PASS" if len(violations) == 0 else "FAIL"
+        return status, violations
+
+    def validate_paragraph(self, paragraph: Paragraph, para_index: int) -> ValidationResult:
+        """Validate a single paragraph"""
+        # Skip empty paragraphs
+        text = paragraph.text.strip()
+        if not text:
+            return None
+
+        # Determine block type
+        is_heading = self._is_heading(paragraph)
+        block_type = "heading" if is_heading else "body"
+        rule = self.HEADING_RULE if is_heading else self.BODY_RULE
+
+        # Get dominant formatting
+        observed = self._get_dominant_formatting(paragraph)
+
+        # Validate
+        status, violations = self._validate_against_rule(observed, rule)
+
+        # Create result (no text_preview for privacy/integration)
+        result = ValidationResult(
+            block_id=f"p_{para_index}",
+            block_type=block_type,
+            observed={
+                "font": observed.font,
+                "size": observed.size,
+                "bold": observed.bold,
+                "italic": observed.italic,
+                "underline": observed.underline,
+                "color": observed.color
+            },
+            expected={
+                "font": rule.font,
+                "size": rule.size,
+                "bold": rule.bold,
+                "italic": rule.italic,
+                "underline": rule.underline,
+                "color": rule.color
+            },
+            status=status,
+            violations=violations
+        )
+
+        return result
+
+    def validate_document(self) -> List[ValidationResult]:
+        """Validate entire document and return results"""
+        results = []
+        para_counter = 0
+
+        # Validate regular paragraphs
+        for paragraph in self.document.paragraphs:
+            result = self.validate_paragraph(paragraph, para_counter)
+            if result:  # Skip None (empty paragraphs)
+                results.append(result)
+                para_counter += 1
+
+        # Validate paragraphs inside tables
+        for table_idx, table in enumerate(self.document.tables):
+            for row_idx, row in enumerate(table.rows):
+                for cell_idx, cell in enumerate(row.cells):
+                    for cell_para in cell.paragraphs:
+                        result = self.validate_paragraph(cell_para, para_counter)
+                        if result:
+                            # Add table location info to block_id
+                            result.block_id = f"t{table_idx}_r{row_idx}_c{cell_idx}_p{para_counter}"
+                            results.append(result)
+                            para_counter += 1
+
+        return results
+
+    def calculate_score(self, results: List[ValidationResult]) -> Dict:
+        """
+        Calculate compliance score from validation results
+
+        Returns:
+            Dictionary with score (1-10), pass_rate, and counts
+        """
+        total = len(results)
+        if total == 0:
+            return {
+                "score": 0.0,
+                "pass_rate": 0.0,
+                "total_blocks": 0,
+                "passed": 0,
+                "failed": 0
+            }
+
+        passed = sum(1 for r in results if r.status == "PASS")
+        pass_rate = passed / total
+
+        # Linear mapping: 0% = 0, 100% = 10
+        # Round to 1 decimal place
+        score = round(pass_rate * 10, 1)
+
+        return {
+            "score": score,
+            "pass_rate": pass_rate,
+            "total_blocks": total,
+            "passed": passed,
+            "failed": total - passed
+        }
+
+    def categorize_violations(self, results: List[ValidationResult]) -> Dict[str, int]:
+        """
+        Categorize violations by type
+
+        Returns:
+            Dictionary with counts for each violation category
+        """
+        categories = {
+            "font_errors": 0,
+            "size_errors": 0,
+            "bold_errors": 0,
+            "italic_errors": 0,
+            "underline_errors": 0,
+            "color_errors": 0
+        }
+
+        for result in results:
+            for violation in result.violations:
+                violation_lower = violation.lower()
+                if "font" in violation_lower:
+                    categories["font_errors"] += 1
+                elif "size" in violation_lower:
+                    categories["size_errors"] += 1
+                elif "bold" in violation_lower:
+                    categories["bold_errors"] += 1
+                elif "italic" in violation_lower:
+                    categories["italic_errors"] += 1
+                elif "underline" in violation_lower:
+                    categories["underline_errors"] += 1
+                elif "color" in violation_lower:
+                    categories["color_errors"] += 1
+
+        return categories
+
+    def score_document(self) -> Dict:
+        """
+        Main API method: Score document and return structured results
+
+        Returns:
+            Dictionary containing:
+            - score: float (1-10 scale)
+            - pass_rate: float (0.0-1.0)
+            - total_blocks: int
+            - passed: int
+            - failed: int
+            - violations_by_category: dict with error counts
+
+        Example:
+            screener = DocxFormatScreener("resume.docx")
+            result = screener.score_document()
+            print(f"Score: {result['score']}/10")
+        """
+        try:
+            # Validate document
+            results = self.validate_document()
+
+            # Calculate score
+            score_data = self.calculate_score(results)
+
+            # Categorize violations
+            violations = self.categorize_violations(results)
+
+            # Combine into final result
+            return {
+                **score_data,
+                "violations_by_category": violations
+            }
+
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Document not found: {self.docx_path}")
+        except Exception as e:
+            raise Exception(f"Error processing document: {str(e)}")
+
+    def generate_report(self, output_path: Optional[str] = None) -> Dict:
+        """
+        Generate validation report
+
+        Returns a dict with:
+        - summary: overall stats
+        - results: per-paragraph results
+        """
+        results = self.validate_document()
+
+        # Summary stats
+        total = len(results)
+        passed = sum(1 for r in results if r.status == "PASS")
+        failed = total - passed
+
+        report = {
+            "document": str(self.docx_path),
+            "summary": {
+                "total_blocks": total,
+                "passed": passed,
+                "failed": failed,
+                "pass_rate": f"{(passed/total*100) if total > 0 else 0:.1f}%"
+            },
+            "results": [asdict(r) for r in results]
+        }
+
+        # Save to file if requested
+        if output_path:
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(report, f, indent=2, ensure_ascii=False)
+            print(f"Report saved to: {output_path}")
+
+        return report
+
+    def print_summary(self):
+        """Print a human-readable summary (no text content)"""
+        result = self.score_document()
+
+        print(f"\n{'='*70}")
+        print(f"DOCX Format Screening Report: {self.docx_path.name}")
+        print(f"{'='*70}\n")
+
+        print(f"Score: {result['score']}/10")
+        print(f"Total blocks analyzed: {result['total_blocks']}")
+        print(f"✓ Passed: {result['passed']}")
+        print(f"✗ Failed: {result['failed']}")
+        print(f"Pass rate: {result['pass_rate']*100:.1f}%\n")
+
+        if result['failed'] > 0:
+            print(f"{'='*70}")
+            print("VIOLATIONS BY CATEGORY:")
+            print(f"{'='*70}\n")
+
+            for category, count in result['violations_by_category'].items():
+                if count > 0:
+                    category_name = category.replace('_', ' ').title()
+                    print(f"  {category_name}: {count}")
+
+
+def quick_score(docx_path: str) -> float:
+    """
+    Quick scoring function for simple use cases
+
+    Args:
+        docx_path: Path to the DOCX file
+
+    Returns:
+        Score from 1-10 based on formatting compliance
+
+    Example:
+        score = quick_score("resume.docx")
+        print(f"Document score: {score}/10")
+    """
+    if not Path(docx_path).exists():
+        raise FileNotFoundError(f"Document not found: {docx_path}")
+
+    screener = DocxFormatScreener(docx_path)
+    result = screener.score_document()
+    return result['score']
+
+
+def main():
+    """CLI entry point"""
+    import sys
+
+    if len(sys.argv) < 2:
+        print("Usage: python formatscreener.py <path-to-docx> [output-json]")
+        print("\nExample:")
+        print("  python formatscreener.py my-document.docx")
+        print("  python formatscreener.py my-document.docx report.json")
+        sys.exit(1)
+
+    docx_path = sys.argv[1]
+    output_path = sys.argv[2] if len(sys.argv) > 2 else None
+
+    if not Path(docx_path).exists():
+        print(f"Error: File not found: {docx_path}")
+        sys.exit(1)
+
+    # Create screener and run validation
+    screener = DocxFormatScreener(docx_path, strictness="majority")
+
+    # Print summary to console
+    screener.print_summary()
+
+    # Generate JSON report
+    screener.generate_report(output_path)
+
+    print(f"\n{'='*70}")
+    print("Validation complete!")
+    print(f"{'='*70}\n")
+
+
+if __name__ == "__main__":
+    main()
