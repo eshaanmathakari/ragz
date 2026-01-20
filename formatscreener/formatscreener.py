@@ -35,7 +35,7 @@ Usage Examples:
 """
 
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
 from pathlib import Path
 
@@ -87,6 +87,7 @@ class ValidationResult:
     violations: List[str]
     text_preview: str = ""  # First 50 chars of paragraph text
     violation_details: Dict[str, str] = None  # Human-readable violation messages
+    section_name: str = "Unknown Section"  # Actual section heading text
 
     def __post_init__(self):
         """Initialize violation_details if not provided"""
@@ -132,6 +133,7 @@ class DocxFormatScreener:
         self.docx_path = Path(docx_path)
         self.strictness = strictness
         self.cluster_consecutive = cluster_consecutive
+        self.current_section_name = None  # Track current section heading for context
 
         # Validate file exists
         if not self.docx_path.exists():
@@ -497,23 +499,53 @@ class DocxFormatScreener:
         """
         results = []
         para_counter = 0
+        self.current_section_name = None  # Reset at document start
 
         # Validate regular paragraphs
         for paragraph in self.document.paragraphs:
+            # Check if this is a heading and update current section
+            if self._is_heading(paragraph):
+                heading_text = paragraph.text.strip()
+                if heading_text and len(heading_text) < 100:  # Reasonable heading length
+                    self.current_section_name = heading_text
+
             run_results = self.validate_paragraph_runs(paragraph, para_counter)
+            # Add section name to each result
+            for result in run_results:
+                result.section_name = self.current_section_name or "Header"
             results.extend(run_results)
             if paragraph.text.strip():  # Count non-empty paragraphs
                 para_counter += 1
 
         # Validate paragraphs inside tables
         for table_idx, table in enumerate(self.document.tables):
+            # Try to determine section from table context
+            # Use current section or try first cell
+            try:
+                first_cell_text = table.rows[0].cells[0].text.strip()
+                if first_cell_text and len(first_cell_text) < 50 and first_cell_text.isupper():
+                    table_section = first_cell_text
+                else:
+                    table_section = self.current_section_name or f"Table {table_idx + 1}"
+            except (IndexError, AttributeError):
+                table_section = self.current_section_name or f"Table {table_idx + 1}"
+
             for row_idx, row in enumerate(table.rows):
                 for cell_idx, cell in enumerate(row.cells):
                     for cell_para in cell.paragraphs:
+                        # Check if this paragraph is a heading within the table
+                        if self._is_heading(cell_para):
+                            heading_text = cell_para.text.strip()
+                            if heading_text and len(heading_text) < 100:
+                                # Update current section for table content
+                                self.current_section_name = heading_text
+                                table_section = heading_text
+
                         run_results = self.validate_paragraph_runs(cell_para, para_counter)
-                        # Update block_id to include table location
+                        # Update block_id to include table location and add section name
                         for result in run_results:
                             result.block_id = f"t{table_idx}_r{row_idx}_c{cell_idx}_{result.block_id}"
+                            result.section_name = table_section
                         results.extend(run_results)
                         if cell_para.text.strip():  # Count non-empty paragraphs
                             para_counter += 1
@@ -831,13 +863,71 @@ class DocxFormatScreener:
         except Exception as e:
             raise Exception(f"Error processing document: {str(e)}")
 
+    def _format_comment_string(self, violation_details: Dict[str, str]) -> str:
+        """
+        Convert violation_details dict to single combined string
+
+        Args:
+            violation_details: Dict like {"font_mismatch": "Expected...", "size_mismatch": "Expected..."}
+
+        Returns:
+            Single string like "Expected Calibri but found Open Sans; Expected 11.0pt but found 12.0pt"
+        """
+        if not violation_details:
+            return ""
+
+        # Combine all messages with semicolon separator
+        messages = list(violation_details.values())
+        return "; ".join(messages)
+
+    def _deduplicate_errors(self, inconsistencies: List[ValidationResult]) -> List[ValidationResult]:
+        """
+        Deduplicate repeated error patterns by adding counts to first occurrence
+
+        Strategy:
+        1. Group errors by violation types (same set of violation types)
+        2. For each group with >1 occurrence:
+           - Keep first occurrence
+           - Add count message to its comment: "(N more similar errors found)"
+
+        Returns:
+            Deduplicated list with count annotations in comments
+        """
+        if not inconsistencies:
+            return inconsistencies
+
+        # Group by violation signature (sorted violation list)
+        from collections import defaultdict
+        groups = defaultdict(list)
+
+        for result in inconsistencies:
+            # Create signature from sorted violation types
+            signature = tuple(sorted(result.violations))
+            groups[signature].append(result)
+
+        deduplicated = []
+
+        for signature, results in groups.items():
+            # Keep first result
+            first_result = results[0]
+
+            # If there are duplicates, add count to comment
+            if len(results) > 1:
+                additional_count = len(results) - 1
+                # Will add count when generating final JSON
+                first_result._dedup_count = additional_count
+
+            deduplicated.append(first_result)
+
+        return deduplicated
+
     def generate_report(self, output_path: Optional[str] = None) -> Dict:
         """
         Generate validation report with formatting inconsistencies only
 
         Returns a dict with:
         - document: document filename
-        - inconsistencies: list of formatting violations only (no PASS results)
+        - inconsistencies: list with fields: sentence, comment, type of error, Section Name
 
         The report only includes runs/paragraphs with formatting issues.
         PASS results are not included for cleaner output.
@@ -847,24 +937,38 @@ class DocxFormatScreener:
         results = self.validate_document()
 
         # Filter to only show failed results (inconsistencies)
-        # Since validate_document() now only returns failures, this is already done
-        # But keeping filter for clarity and backward compatibility
         inconsistencies = [r for r in results if r.status == "FAIL"]
 
         # Apply clustering if enabled
         if self.cluster_consecutive and inconsistencies:
             inconsistencies = self._cluster_consecutive_errors(inconsistencies)
 
-        # Build report with clean format
+        # Apply deduplication (show first + count for repeated errors)
+        inconsistencies = self._deduplicate_errors(inconsistencies)
+
+        # Build report with new field names
         report = {
-            "document": str(self.docx_path.name),  # Just filename, not full path
+            "document": str(self.docx_path.name),
             "inconsistencies": []
         }
 
-        # Convert results to dicts and remove status field (all are FAIL)
+        # Convert results to new format
         for r in inconsistencies:
-            result_dict = asdict(r)
-            result_dict.pop('status', None)  # Remove status field
+            # Convert violation_details dict to single string
+            comment = self._format_comment_string(r.violation_details)
+
+            # Add deduplication count if present
+            if hasattr(r, '_dedup_count') and r._dedup_count > 0:
+                comment += f" ({r._dedup_count} more similar error{'s' if r._dedup_count > 1 else ''} found)"
+
+            # Build new format with only required fields
+            result_dict = {
+                "sentence": r.text_preview,
+                "comment": comment,
+                "type of error": r.violations,
+                "Section Name": r.section_name
+            }
+
             report["inconsistencies"].append(result_dict)
 
         # Save to file if requested
