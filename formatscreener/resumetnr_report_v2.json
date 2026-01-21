@@ -1,0 +1,965 @@
+{
+  "document": "Resumetnr.docx",
+  "inconsistencies": [
+    {
+      "block_id": "t0_r0_c0_p0_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 36.0,
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "Your Name",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "size_mismatch": "Expected 11.0pt but found 36.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r0_c0_p1_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r0_c1_p2_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "123 Your Street",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r0_c1_p3_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Your City, ST 12345",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r0_c1_p4_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "(123) 456-7890",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r0_c1_p5_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "no_reply@example.com",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p6_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "EXPERIENCE",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p7_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Company,",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p7_r1",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Location",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p7_r2",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "—",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p7_r3",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Job Title",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p8_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - PRESENT",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p9_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p10_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Company,",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p10_r1",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Location",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p10_r2",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "—",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p10_r3",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Job Title",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p11_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - MONTH 20XX",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p12_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p13_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Company,",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p13_r1",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Location",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p13_r2",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "—",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p13_r3",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Job Title",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p14_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - MONTH 20XX",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p15_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p16_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "EDUCATION",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p17_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "School",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p17_r1",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Name,",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p17_r2",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Location —",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p17_r3",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Degree",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p18_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - MONTH 20XX",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p19_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p20_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "School Name,",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p20_r1",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Location —",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p20_r2",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Degree",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p21_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - MONTH 20XX",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p22_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p23_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "PROJECTS",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p24_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Project Name",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p24_r1",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "—",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p24_r2",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Detail",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p25_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p26_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "SKILLS",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p27_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet.",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p28_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Consectetuer adipiscing elit.",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p29_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Sed diam nonummy nibh euismod tincidunt.",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p30_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "L​​​‌​aoreet dolore magna aliquam erat volutpat.",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p31_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "AWARDS",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p32_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Lorem ipsum",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p32_r1",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "dolor sit",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p32_r2",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "amet Consectetuer adipiscing elit, Sed diam nonumm...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p33_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Nibh euismod tincidunt",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p33_r1",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "ut laoreet dolore magna aliquam erat volutpat.",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p34_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p34_r1",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "amet Consectetuer adipiscing elit, Sed diam nonumm...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p35_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "text_preview": "Nibh euismod tincidunt",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'",
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p35_r1",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "ut laoreet dolore magna aliquam erat volutpat.",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p36_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Times New Roman",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "LANGUAGES",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p37_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Times New Roman"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum, Dolor sit amet, Consectetuer",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Times New Roman'"
+      }
+    }
+  ]
+}

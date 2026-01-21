@@ -1,0 +1,580 @@
+{
+  "document": "Resume.docx",
+  "inconsistencies": [
+    {
+      "block_id": "t0_r0_c0_p0_r0",
+      "block_type": "heading",
+      "observed": {
+        "size": 36.0,
+        "bold": true
+      },
+      "violations": [
+        "size_mismatch"
+      ],
+      "text_preview": "Your Name",
+      "violation_details": {
+        "size_mismatch": "Expected 11.0pt but found 36.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r0_c0_p1_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Open Sans"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r0_c1_p2_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Open Sans"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "123 Your Street",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r0_c1_p3_r0",
+      "block_type": "body",
+      "observed": {
+        "font": "Open Sans"
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "Your City, ST 12345",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r0_c1_p4_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "(123) 456-7890",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r0_c1_p5_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "no_reply@example.com",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p6_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "EXPERIENCE",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p7_r1",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Location",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p7_r2",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "—",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p7_r3",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Job Title",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p8_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - PRESENT",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p10_r1",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Location",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p10_r2",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "—",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p10_r3",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Job Title",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p11_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - MONTH 20XX",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p13_r1",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Location",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p13_r2",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "—",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p13_r3",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Job Title",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p14_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - MONTH 20XX",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p16_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "EDUCATION",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p17_r2",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Location —",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p17_r3",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Degree",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p18_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - MONTH 20XX",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p20_r1",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Location —",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p20_r2",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Degree",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p21_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "size": 8.0
+      },
+      "violations": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "text_preview": "MONTH 20XX - MONTH 20XX",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'",
+        "size_mismatch": "Expected 11.0pt but found 8.0pt"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p23_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "PROJECTS",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p24_r1",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "—",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False"
+      }
+    },
+    {
+      "block_id": "t0_r1_c0_p24_r2",
+      "block_type": "heading",
+      "observed": {
+        "size": 11.0,
+        "bold": false,
+        "italic": true
+      },
+      "violations": [
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "text_preview": "Detail",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=True but found bold=False",
+        "italic_mismatch": "Expected italic=False but found italic=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p26_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "SKILLS",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p31_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "AWARDS",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p32_r0",
+      "block_type": "body",
+      "observed": {
+        "bold": true
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Lorem ipsum",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p32_r1",
+      "block_type": "body",
+      "observed": {
+        "bold": true
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "dolor sit",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p33_r0",
+      "block_type": "body",
+      "observed": {
+        "bold": true
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Nibh euismod tincidunt",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p34_r0",
+      "block_type": "body",
+      "observed": {
+        "bold": true
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Lorem ipsum dolor sit",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p35_r0",
+      "block_type": "body",
+      "observed": {
+        "bold": true
+      },
+      "violations": [
+        "bold_mismatch"
+      ],
+      "text_preview": "Nibh euismod tincidunt",
+      "violation_details": {
+        "bold_mismatch": "Expected bold=False but found bold=True"
+      }
+    },
+    {
+      "block_id": "t0_r1_c1_p36_r0",
+      "block_type": "heading",
+      "observed": {
+        "font": "Open Sans",
+        "bold": true
+      },
+      "violations": [
+        "font_mismatch"
+      ],
+      "text_preview": "LANGUAGES",
+      "violation_details": {
+        "font_mismatch": "Expected 'Calibri' but found 'Open Sans'"
+      }
+    }
+  ]
+}

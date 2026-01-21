@@ -1,37 +1,36 @@
 """
-DOCX Format Screener - Style Validation & Scoring Tool
+DOCX Format Screener - Production Module
 
-Validates formatting rules for Word documents and provides a compliance score (1-10).
+Validates formatting rules for Word documents and generates JSON reports.
 
 Validation Rules:
 - Headings: Calibri, 11pt, Bold, Black
 - Body: Calibri, 11pt, No Bold, Black
 - Also validates: Font color, Italic status, Underline status
 
-Usage Examples:
+Usage:
 
-  # Quick scoring for simple use cases
-  from formatscreener import quick_score
+  Command Line:
+    python3 formatscreener.py document.docx output.json
 
-  score = quick_score("resume.docx")
-  print(f"Document score: {score}/10")
+  Python Import:
+    from formatscreener import DocxFormatScreener
 
-  # Detailed analysis with categorized violations
-  from formatscreener import DocxFormatScreener
+    screener = DocxFormatScreener("document.docx")
+    report = screener.generate_report("output.json")
 
-  screener = DocxFormatScreener("resume.docx")
-  result = screener.score_document()
-
-  print(f"Score: {result['score']}/10")
-  print(f"Pass rate: {result['pass_rate']:.1%}")
-  print(f"Violations: {result['violations_by_category']}")
-
-  # Agentic AI integration example
-  def validate_document(docx_path: str) -> dict:
-      screener = DocxFormatScreener(docx_path)
-      result = screener.score_document()
-      result['meets_standards'] = result['score'] >= 7.0
-      return result
+    # Report format:
+    {
+      "document": "filename.docx",
+      "inconsistencies": [
+        {
+          "sentence": "Text with error",
+          "comment": "Expected Calibri but found Arial",
+          "type of error": ["font_mismatch"],
+          "Section Name": "EXPERIENCE"
+        }
+      ]
+    }
 """
 
 import json
@@ -41,8 +40,6 @@ from pathlib import Path
 
 try:
     from docx import Document
-    from docx.shared import RGBColor, Pt
-    from docx.enum.style import WD_STYLE_TYPE
     from docx.text.run import Run
     from docx.text.paragraph import Paragraph
 except ImportError as e:
@@ -52,7 +49,7 @@ except ImportError as e:
 
 
 # Public API exports
-__all__ = ['DocxFormatScreener', 'FormatRule', 'quick_score']
+__all__ = ['DocxFormatScreener']
 
 
 @dataclass
@@ -449,48 +446,6 @@ class DocxFormatScreener:
 
         return results
 
-    def validate_paragraph(self, paragraph: Paragraph, para_index: int) -> ValidationResult:
-        """
-        [DEPRECATED] Validate a single paragraph using dominant formatting
-
-        This method is kept for backward compatibility.
-        For new code, use validate_paragraph_runs() for run-level detection.
-        """
-        # Skip empty paragraphs
-        text = paragraph.text.strip()
-        if not text:
-            return None
-
-        # Determine block type
-        is_heading = self._is_heading(paragraph)
-        block_type = "heading" if is_heading else "body"
-        rule = self.HEADING_RULE if is_heading else self.BODY_RULE
-
-        # Get dominant formatting
-        observed = self._get_dominant_formatting(paragraph)
-
-        # Validate
-        status, violations, violation_details = self._validate_against_rule(observed, rule)
-
-        # Create text preview (first 50 chars)
-        text_preview = text[:50] + "..." if len(text) > 50 else text
-
-        # Build clean observed dict
-        observed_dict = self._build_observed_dict(observed)
-
-        # Create result
-        result = ValidationResult(
-            block_id=f"p_{para_index}",
-            block_type=block_type,
-            observed=observed_dict,
-            status=status,
-            violations=violations,
-            text_preview=text_preview,
-            violation_details=violation_details
-        )
-
-        return result
-
     def validate_document(self) -> List[ValidationResult]:
         """
         Validate entire document at run-level and return results
@@ -746,123 +701,6 @@ class DocxFormatScreener:
 
         return clusters
 
-    def calculate_score(self, results: List[ValidationResult]) -> Dict:
-        """
-        [DEPRECATED] Calculate compliance score from validation results
-
-        This method is kept for backward compatibility.
-        For new code, use generate_report() instead which provides
-        detailed inconsistency information without scoring.
-
-        Returns:
-            Dictionary with score (1-10), pass_rate, and counts
-        """
-        total = len(results)
-        if total == 0:
-            return {
-                "score": 0.0,
-                "pass_rate": 0.0,
-                "total_blocks": 0,
-                "passed": 0,
-                "failed": 0
-            }
-
-        passed = sum(1 for r in results if r.status == "PASS")
-        pass_rate = passed / total
-
-        # Linear mapping: 0% = 0, 100% = 10
-        # Round to 1 decimal place
-        score = round(pass_rate * 10, 1)
-
-        return {
-            "score": score,
-            "pass_rate": pass_rate,
-            "total_blocks": total,
-            "passed": passed,
-            "failed": total - passed
-        }
-
-    def categorize_violations(self, results: List[ValidationResult]) -> Dict[str, int]:
-        """
-        [DEPRECATED] Categorize violations by type
-
-        This method is kept for backward compatibility.
-        For new code, use generate_report() instead which provides
-        detailed inconsistency information with violation_details.
-
-        Returns:
-            Dictionary with counts for each violation category
-        """
-        categories = {
-            "font_errors": 0,
-            "size_errors": 0,
-            "bold_errors": 0,
-            "italic_errors": 0,
-            "underline_errors": 0,
-            "color_errors": 0
-        }
-
-        for result in results:
-            for violation in result.violations:
-                violation_lower = violation.lower()
-                if "font" in violation_lower:
-                    categories["font_errors"] += 1
-                elif "size" in violation_lower:
-                    categories["size_errors"] += 1
-                elif "bold" in violation_lower:
-                    categories["bold_errors"] += 1
-                elif "italic" in violation_lower:
-                    categories["italic_errors"] += 1
-                elif "underline" in violation_lower:
-                    categories["underline_errors"] += 1
-                elif "color" in violation_lower:
-                    categories["color_errors"] += 1
-
-        return categories
-
-    def score_document(self) -> Dict:
-        """
-        [DEPRECATED] Main API method: Score document and return structured results
-
-        This method is kept for backward compatibility.
-        For new code, use generate_report() instead which provides
-        detailed inconsistency information without scoring.
-
-        Returns:
-            Dictionary containing:
-            - score: float (1-10 scale)
-            - pass_rate: float (0.0-1.0)
-            - total_blocks: int
-            - passed: int
-            - failed: int
-            - violations_by_category: dict with error counts
-
-        Example:
-            screener = DocxFormatScreener("resume.docx")
-            result = screener.score_document()
-            print(f"Score: {result['score']}/10")
-        """
-        try:
-            # Validate document
-            results = self.validate_document()
-
-            # Calculate score
-            score_data = self.calculate_score(results)
-
-            # Categorize violations
-            violations = self.categorize_violations(results)
-
-            # Combine into final result
-            return {
-                **score_data,
-                "violations_by_category": violations
-            }
-
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Document not found: {self.docx_path}")
-        except Exception as e:
-            raise Exception(f"Error processing document: {str(e)}")
-
     def _format_comment_string(self, violation_details: Dict[str, str]) -> str:
         """
         Convert violation_details dict to single combined string
@@ -978,60 +816,6 @@ class DocxFormatScreener:
             print(f"Report saved to: {output_path}")
 
         return report
-
-    def print_summary(self):
-        """
-        [DEPRECATED] Print a human-readable summary (no text content)
-
-        This method is kept for backward compatibility.
-        For new code, use generate_report() and format the output as needed.
-        """
-        result = self.score_document()
-
-        print(f"\n{'='*70}")
-        print(f"DOCX Format Screening Report: {self.docx_path.name}")
-        print(f"{'='*70}\n")
-
-        print(f"Score: {result['score']}/10")
-        print(f"Total blocks analyzed: {result['total_blocks']}")
-        print(f"✓ Passed: {result['passed']}")
-        print(f"✗ Failed: {result['failed']}")
-        print(f"Pass rate: {result['pass_rate']*100:.1f}%\n")
-
-        if result['failed'] > 0:
-            print(f"{'='*70}")
-            print("VIOLATIONS BY CATEGORY:")
-            print(f"{'='*70}\n")
-
-            for category, count in result['violations_by_category'].items():
-                if count > 0:
-                    category_name = category.replace('_', ' ').title()
-                    print(f"  {category_name}: {count}")
-
-
-def quick_score(docx_path: str) -> float:
-    """
-    [DEPRECATED] Quick scoring function for simple use cases
-
-    This function is kept for backward compatibility.
-    For new code, use DocxFormatScreener().generate_report() instead.
-
-    Args:
-        docx_path: Path to the DOCX file
-
-    Returns:
-        Score from 1-10 based on formatting compliance
-
-    Example:
-        score = quick_score("resume.docx")
-        print(f"Document score: {score}/10")
-    """
-    if not Path(docx_path).exists():
-        raise FileNotFoundError(f"Document not found: {docx_path}")
-
-    screener = DocxFormatScreener(docx_path)
-    result = screener.score_document()
-    return result['score']
 
 
 def main():

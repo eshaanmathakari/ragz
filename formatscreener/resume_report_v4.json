@@ -1,0 +1,50 @@
+{
+  "document": "Resume.docx",
+  "inconsistencies": [
+    {
+      "sentence": "Your Name",
+      "comment": "Expected 11.0pt but found 36.0pt",
+      "type of error": [
+        "size_mismatch"
+      ],
+      "Section Name": "Your Name"
+    },
+    {
+      "sentence": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "comment": "Expected 'Calibri' but found 'Open Sans' (5 more similar errors found)",
+      "type of error": [
+        "font_mismatch"
+      ],
+      "Section Name": "Your Name"
+    },
+    {
+      "sentence": "EXPERIENCE\nLocation\n—\nJob Title\nMONTH 20XX - PRESENT",
+      "comment": "Expected 'Calibri' but found 'Open Sans'; Expected bold=True but found bold=False; Expected italic=False but found italic=True; Expected 11.0pt but found 8.0pt (4 more similar errors found)",
+      "type of error": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch",
+        "size_mismatch"
+      ],
+      "Section Name": "Unknown Section"
+    },
+    {
+      "sentence": "PROJECTS\n—\nDetail",
+      "comment": "Expected 'Calibri' but found 'Open Sans'; Expected bold=True but found bold=False; Expected italic=False but found italic=True",
+      "type of error": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "Section Name": "Unknown Section"
+    },
+    {
+      "sentence": "Lorem ipsum\ndolor sit\nNibh euismod tincidunt\nLorem ipsum dolor sit\nNibh euismod tincidunt",
+      "comment": "Expected bold=False but found bold=True",
+      "type of error": [
+        "bold_mismatch"
+      ],
+      "Section Name": "Unknown Section"
+    }
+  ]
+}

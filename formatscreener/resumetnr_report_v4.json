@@ -1,0 +1,52 @@
+{
+  "document": "Resumetnr.docx",
+  "inconsistencies": [
+    {
+      "sentence": "Your Name",
+      "comment": "Expected 'Calibri' but found 'Times New Roman'; Expected 11.0pt but found 36.0pt",
+      "type of error": [
+        "font_mismatch",
+        "size_mismatch"
+      ],
+      "Section Name": "Your Name"
+    },
+    {
+      "sentence": "Lorem ipsum dolor sit amet, consectetuer adipiscin...",
+      "comment": "Expected 'Calibri' but found 'Times New Roman' (13 more similar errors found)",
+      "type of error": [
+        "font_mismatch"
+      ],
+      "Section Name": "Your Name"
+    },
+    {
+      "sentence": "EXPERIENCE\nCompany,\nLocation\n—\nJob Title\nMONTH 20XX - PRESENT",
+      "comment": "Expected 'Calibri' but found 'Times New Roman'; Expected bold=True but found bold=False; Expected italic=False but found italic=True; Expected 11.0pt but found 8.0pt (4 more similar errors found)",
+      "type of error": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch",
+        "size_mismatch"
+      ],
+      "Section Name": "Unknown Section"
+    },
+    {
+      "sentence": "PROJECTS\nProject Name\n—\nDetail",
+      "comment": "Expected 'Calibri' but found 'Times New Roman'; Expected bold=True but found bold=False; Expected italic=False but found italic=True",
+      "type of error": [
+        "font_mismatch",
+        "bold_mismatch",
+        "italic_mismatch"
+      ],
+      "Section Name": "Unknown Section"
+    },
+    {
+      "sentence": "Lorem ipsum\ndolor sit\namet Consectetuer adipiscing elit, Sed diam nonumm...\nNibh euismod tincidunt\nut laoreet dolore magna aliquam erat volutpat.\nLorem ipsum dolor sit\namet Consectetuer adipiscing ...",
+      "comment": "Expected 'Calibri' but found 'Times New Roman'; Expected bold=False but found bold=True",
+      "type of error": [
+        "font_mismatch",
+        "bold_mismatch"
+      ],
+      "Section Name": "Unknown Section"
+    }
+  ]
+}
