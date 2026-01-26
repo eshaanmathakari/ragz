@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # OpenSearch for local development
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: rag-assist-opensearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_SECURITY_PLUGIN=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # OpenSearch Dashboards (optional - for debugging)
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.0
+    container_name: rag-assist-dashboards
+    environment:
+      - OPENSEARCH_HOSTS=["http://opensearch:9200"]
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5601:5601"
+    networks:
+      - rag-network
+    depends_on:
+      opensearch:
+        condition: service_healthy
+
+  # LocalStack for AWS services simulation
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: rag-assist-localstack
+    environment:
+      - SERVICES=s3,dynamodb,stepfunctions
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh
+    networks:
+      - rag-network
+
+  # RAG Assist API (development mode)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-assist-api
+    environment:
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - OPENSEARCH_ENDPOINT=http://opensearch:9200
+      - S3_BUCKET_NAME=rag-assist-data
+      - DYNAMODB_TABLE_NAME=rag-assist-sessions
+      - API_DEBUG=true
+      - LOG_LEVEL=DEBUG
+      # LocalStack endpoints
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    networks:
+      - rag-network
+    depends_on:
+      opensearch:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    command: uvicorn rag_assist.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  opensearch-data:
+  localstack-data:
+
+networks:
+  rag-network:
+    driver: bridge
