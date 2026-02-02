@@ -1,24 +1,27 @@
-"""Image extraction module for PPTX files.
+"""Image extraction module for PPTX files (v2 - PDF Approach).
 
 This module provides tools to:
-- Detect slides containing images, SmartArt, and charts
-- Extract/render slides as PNG images
-- Upload images to S3
-- Create mappings between images and slide numbers
+1. Detect slides containing images, SmartArt, and charts
+2. Convert PPTX to PDF using LibreOffice
+3. Extract specific PDF pages as PNG images using PyMuPDF
+4. Upload images to S3
+5. Create mappings between images and slide numbers
 
-This module is designed to be portable and work standalone.
+This module is designed to be portable and work standalone on SageMaker.
 """
 
-# Use relative import to avoid loading the entire rag_assist package
 from .pptx_image_extractor import (
+    # Data classes
     ImageInfo,
     SlideImageMapping,
     ExtractionResult,
+    # Core classes
     PPTXImageDetector,
-    PPTXImageExtractor,
+    PPTXtoPDFConverter,
+    PDFPageExtractor,
     S3ImageStore,
-    ImageMapper,
-    extract_images_from_pptx,
+    # Pipeline function
+    extract_pptx_images,
 )
 
 __all__ = [
@@ -26,8 +29,8 @@ __all__ = [
     "SlideImageMapping",
     "ExtractionResult",
     "PPTXImageDetector",
-    "PPTXImageExtractor",
+    "PPTXtoPDFConverter",
+    "PDFPageExtractor",
     "S3ImageStore",
-    "ImageMapper",
-    "extract_images_from_pptx",
+    "extract_pptx_images",
 ]
