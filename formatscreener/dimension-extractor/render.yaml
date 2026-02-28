@@ -1,0 +1,14 @@
+# render.yaml — One-click deploy on Render
+# https://render.com/docs/infrastructure-as-code
+services:
+  - type: web
+    name: dimension-extractor
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false  # You'll be prompted to enter this during deploy
+      - key: NODE_ENV
+        value: production

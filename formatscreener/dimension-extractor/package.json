@@ -1,0 +1,19 @@
+{
+  "name": "dimension-extractor",
+  "version": "1.0.0",
+  "description": "Extract handwritten dimensions from images using Claude Vision",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "express": "^4.21.0",
+    "dotenv": "^16.4.7",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "cors": "^2.8.5"
+  }
+}

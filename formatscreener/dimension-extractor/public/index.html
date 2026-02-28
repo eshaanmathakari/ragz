@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dimension Extractor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0b;
+      --surface: #0d0d0e;
+      --surface-2: #111113;
+      --border: #1e1e22;
+      --border-2: #27272a;
+      --text: #e4e4e7;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --text-faint: #52525b;
+      --text-ghost: #3f3f46;
+      --accent: #22c55e;
+      --accent-hover: #16a34a;
+      --error-bg: #1c0a0a;
+      --error-border: #7f1d1d;
+      --error-text: #fca5a5;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', 'SF Mono', 'Fira Code', monospace;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ────────────────────────────────────── */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-dot {
+      width: 10px; height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22c55e66;
+    }
+    .header-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .btn-reset {
+      background: none;
+      border: 1px solid var(--border-2);
+      color: var(--text-dim);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+      display: none;
+    }
+    .btn-reset:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    .btn-reset.visible { display: block; }
+
+    /* ── Main ──────────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 24px;
+      gap: 24px;
+    }
+
+    /* ── Drop zone ────────────────────────────────── */
+    .dropzone {
+      border: 2px dashed var(--border-2);
+      border-radius: 12px;
+      padding: 80px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+    }
+    .dropzone.active {
+      border-color: var(--accent);
+      background: #22c55e08;
+    }
+    .dropzone-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      filter: grayscale(1);
+      transition: filter 0.3s;
+    }
+    .dropzone.active .dropzone-icon { filter: none; }
+    .dropzone-title {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .dropzone.active .dropzone-title { color: var(--accent); }
+    .dropzone-hint {
+      font-size: 13px;
+      color: var(--text-faint);
+      line-height: 1.6;
+    }
+    .kbd {
+      color: var(--text-dim);
+      padding: 2px 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      font-size: 12px;
+      border: 1px solid var(--border-2);
+    }
+    .file-input { display: none; }
+
+    /* ── Preview ──────────────────────────────────── */
+    .preview {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: none;
+    }
+    .preview.visible { display: block; }
+    .preview img {
+      width: 100%;
+      max-height: 360px;
+      object-fit: contain;
+      display: block;
+      background: var(--surface-2);
+    }
+
+    /* ── Extract button ───────────────────────────── */
+    .btn-extract {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px #22c55e22;
+      display: none;
+    }
+    .btn-extract.visible { display: block; }
+    .btn-extract:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 30px #22c55e44;
+    }
+
+    /* ── Loading ──────────────────────────────────── */
+    .loading {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-dim);
+      display: none;
+    }
+    .loading.visible { display: block; }
+    .spinner {
+      display: inline-block;
+      width: 24px; height: 24px;
+      border: 2px solid var(--border-2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; letter-spacing: 0.05em; }
+
+    /* ── Error ────────────────────────────────────── */
+    .error-box {
+      padding: 14px 18px;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      border-radius: 8px;
+      color: var(--error-text);
+      font-size: 13px;
+      display: none;
+    }
+    .error-box.visible { display: block; }
+
+    /* ── Results ──────────────────────────────────── */
+    .results {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: none;
+    }
+    .results.visible { display: block; }
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    .results-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .btn-copy {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      transition: all 0.2s;
+    }
+    .btn-copy.copied {
+      background: #22c55e18;
+      border-color: #22c55e44;
+      color: var(--accent);
+    }
+    .results-body { padding: 18px; }
+    .dimension-line {
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      background: var(--surface-2);
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 2px solid #22c55e33;
+    }
+    .dimension-line:last-child { margin-bottom: 0; }
+    .line-num {
+      color: var(--text-ghost);
+      font-size: 11px;
+      min-width: 18px;
+    }
+
+    /* ── Footer ──────────────────────────────────── */
+    .footer-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-ghost);
+      line-height: 1.8;
+      margin-top: 8px;
+    }
+
+    /* ── Token usage ─────────────────────────────── */
+    .usage {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-ghost);
+      letter-spacing: 0.03em;
+      display: none;
+    }
+    .usage.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="status-dot"></div>
+      <span class="header-title">Dimension Extractor</span>
+    </div>
+    <button class="btn-reset" id="resetBtn" onclick="resetApp()">RESET</button>
+  </div>
+
+  <div class="main">
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+      <div class="dropzone-icon">📐</div>
+      <div class="dropzone-title">Drop your image here</div>
+      <div class="dropzone-hint">
+        or click to browse · or <span class="kbd">Ctrl+V</span> to paste
+      </div>
+      <input class="file-input" type="file" id="fileInput" accept="image/*" />
+    </div>
+
+    <!-- Image Preview -->
+    <div class="preview" id="preview">
+      <img id="previewImg" src="" alt="Uploaded image" />
+    </div>
+
+    <!-- Extract Button -->
+    <button class="btn-extract" id="extractBtn" onclick="extractDimensions()">
+      Extract Dimensions
+    </button>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Reading dimensions...</div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="errorBox"></div>
+
+    <!-- Results -->
+    <div class="results" id="results">
+      <div class="results-header">
+        <span class="results-label">Extracted Dimensions</span>
+        <button class="btn-copy" id="copyBtn" onclick="copyToClipboard()">Copy All</button>
+      </div>
+      <div class="results-body" id="resultsBody"></div>
+    </div>
+
+    <!-- Token usage -->
+    <div class="usage" id="usage"></div>
+
+    <!-- Footer -->
+    <div class="footer-hint" id="footerHint">
+      Supports handwritten notes, sketches, blueprints, and measurement photos.<br />
+      Powered by Claude Vision — handles messy handwriting, fractions, and mixed units.
+    </div>
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────
+    let imageData = null;    // { base64, mediaType }
+    let extractedText = "";
+
+    const $ = (id) => document.getElementById(id);
+
+    // ── File processing ───────────────────────────────
+    function processFile(file) {
+      if (!file || !file.type.startsWith("image/")) {
+        showError("Please provide a valid image file.");
+        return;
+      }
+      clearError();
+      hideResults();
+      extractedText = "";
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        $("previewImg").src = dataUrl;
+        $("preview").classList.add("visible");
+        $("dropzone").style.display = "none";
+        $("extractBtn").classList.add("visible");
+        $("resetBtn").classList.add("visible");
+        $("footerHint").style.display = "none";
+
+        imageData = {
+          base64: dataUrl.split(",")[1],
+          mediaType: file.type,
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ── Drag & Drop ───────────────────────────────────
+    const dropzone = $("dropzone");
+    dropzone.addEventListener("dragenter", (e) => { e.preventDefault(); dropzone.classList.add("active"); });
+    dropzone.addEventListener("dragover", (e) => { e.preventDefault(); });
+    dropzone.addEventListener("dragleave", (e) => { e.preventDefault(); dropzone.classList.remove("active"); });
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("active");
+      processFile(e.dataTransfer?.files?.[0]);
+    });
+
+    // ── Paste ─────────────────────────────────────────
+    window.addEventListener("paste", (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          processFile(item.getAsFile());
+          break;
+        }
+      }
+    });
+
+    // ── File input ────────────────────────────────────
+    $("fileInput").addEventListener("change", (e) => processFile(e.target.files?.[0]));
+
+    // ── Extract ───────────────────────────────────────
+    async function extractDimensions() {
+      if (!imageData) return;
+
+      $("extractBtn").classList.remove("visible");
+      $("loading").classList.add("visible");
+      clearError();
+      hideResults();
+
+      try {
+        const res = await fetch("/api/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: imageData.base64,
+            mediaType: imageData.mediaType,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "Extraction failed.");
+          $("extractBtn").classList.add("visible");
+          return;
+        }
+
+        if (!data.dimensions) {
+          showError(data.message || "No dimensions found. Try a clearer photo.");
+          $("extractBtn").classList.add("visible");
+          return;
+        }
+
+        extractedText = data.dimensions;
+        renderResults(data.lines);
+
+        // Show token usage
+        if (data.usage) {
+          $("usage").textContent = `Tokens: ${data.usage.input_tokens} in / ${data.usage.output_tokens} out`;
+          $("usage").classList.add("visible");
+        }
+      } catch (err) {
+        showError("Failed to connect to server. Make sure the app is running.");
+        $("extractBtn").classList.add("visible");
+      } finally {
+        $("loading").classList.remove("visible");
+      }
+    }
+
+    // ── Render results ────────────────────────────────
+    function renderResults(lines) {
+      const body = $("resultsBody");
+      body.innerHTML = lines
+        .map((line, i) =>
+          `<div class="dimension-line">
+            <span class="line-num">${String(i + 1).padStart(2, "0")}</span>
+            ${escapeHtml(line)}
+          </div>`
+        )
+        .join("");
+      $("results").classList.add("visible");
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ── Copy ──────────────────────────────────────────
+    async function copyToClipboard() {
+      try {
+        await navigator.clipboard.writeText(extractedText);
+        const btn = $("copyBtn");
+        btn.classList.add("copied");
+        btn.textContent = "✓ Copied";
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.textContent = "Copy All";
+        }, 2000);
+      } catch {
+        showError("Failed to copy to clipboard.");
+      }
+    }
+
+    // ── Reset ─────────────────────────────────────────
+    function resetApp() {
+      imageData = null;
+      extractedText = "";
+      $("previewImg").src = "";
+      $("preview").classList.remove("visible");
+      $("dropzone").style.display = "";
+      $("extractBtn").classList.remove("visible");
+      $("resetBtn").classList.remove("visible");
+      $("footerHint").style.display = "";
+      $("fileInput").value = "";
+      $("usage").classList.remove("visible");
+      clearError();
+      hideResults();
+    }
+
+    // ── Helpers ───────────────────────────────────────
+    function showError(msg) {
+      $("errorBox").textContent = msg;
+      $("errorBox").classList.add("visible");
+    }
+    function clearError() { $("errorBox").classList.remove("visible"); }
+    function hideResults() {
+      $("results").classList.remove("visible");
+      $("usage").classList.remove("visible");
+    }
+  </script>
+</body>
+</html>
