@@ -14,11 +14,12 @@ const __dirname = dirname(__filename);
 
 // ── Validate env ────────────────────────────────────────────────
 if (!process.env.ANTHROPIC_API_KEY) {
-  console.error("❌  ANTHROPIC_API_KEY is not set. Copy .env.example to .env and add your key.");
-  process.exit(1);
+  console.warn("⚠️  ANTHROPIC_API_KEY is not set. The server will start, but extraction will fail until the key is configured.");
 }
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
 
 // ── Express setup ───────────────────────────────────────────────
 const app = express();
@@ -60,6 +61,10 @@ Rules:
 app.post("/api/extract", apiLimiter, async (req, res) => {
   try {
     const { image, mediaType } = req.body;
+
+    if (!client) {
+      return res.status(503).json({ error: "ANTHROPIC_API_KEY is not configured. Add it as a Secret in Replit or in your .env file." });
+    }
 
     if (!image || !mediaType) {
       return res.status(400).json({ error: "Missing image or mediaType in request body." });
